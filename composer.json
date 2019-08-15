@@ -12,7 +12,7 @@
             "MeigumiI\\Auth\\": "src/"
         },
         "files": [
-            "scr/func.php"
+            "src/func.php"
         ]
     },
     "autoload-dev": {
