@@ -113,7 +113,7 @@
   <component name="PropertiesComponent">
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/src/Middleware" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../../auth-test" />
     <property name="node.js.detected.package.eslint" value="true" />
     <property name="node.js.detected.package.tslint" value="true" />
     <property name="node.js.path.for.package.eslint" value="project" />
@@ -149,7 +149,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1565837169671</updated>
-      <workItem from="1565837170830" duration="3320000" />
+      <workItem from="1565837170830" duration="4173000" />
     </task>
     <servers />
   </component>

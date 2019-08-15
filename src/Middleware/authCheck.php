@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Middleware;
+namespace MeigumiI\Auth\Middleware;
 
 use Hyperf\HttpServer\Contract\RequestInterface;
 use MeigumiI\Auth\TokenAuthTools;
