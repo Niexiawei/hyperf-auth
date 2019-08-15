@@ -10,7 +10,10 @@
     "autoload": {
         "psr-4": {
             "MeigumiI\\Auth\\": "src/"
-        }
+        },
+        "files": [
+            "scr/func.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {
