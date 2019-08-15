@@ -1,5 +1,5 @@
-# component-creater
+# hyperf 框架的 auth组件
 
 ```
-composer create-project hyperf/component-creater
+.....
 ```
