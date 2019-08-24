@@ -3,12 +3,14 @@
 
 namespace MeigumiI\Auth;
 
+use MeigumiI\Auth\Exception\GuardNothingnessException;
+
 class Auth
 {
     public function auth($guard){
         $model = $this->getModel($guard);
         if(empty($model)){
-            throw new \RuntimeException('guard不存在');
+            throw new GuardNothingnessException('guard不存在');
         }
         return new TokenAuthDrive($guard,$this->getToken(),$this->getModel($guard));
     }

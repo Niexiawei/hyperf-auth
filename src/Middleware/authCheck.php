@@ -6,6 +6,7 @@ namespace MeigumiI\Auth\Middleware;
 
 use Hyperf\HttpServer\Contract\RequestInterface;
 use MeigumiI\Auth\Auth;
+use MeigumiI\Auth\Exception\GuardNothingnessException;
 use MeigumiI\Auth\TokenAuthTools;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -39,8 +40,12 @@ class authCheck implements MiddlewareInterface
             ]);
         }
 
-        if(!auth($this->guard())->check()){
-            return  $this->response->json(['code'=>401,'msg'=>'token已失效，请重新登录']);
+        try{
+            if(!auth($this->guard())->check()){
+                return  $this->response->json(['code'=>401,'msg'=>'token已失效，请重新登录']);
+            }
+        }catch (GuardNothingnessException $exception){
+            return  $this->response->json(['code'=>401,'msg'=>'非法的Token']);
         }
 
         return $handler->handle($request);
