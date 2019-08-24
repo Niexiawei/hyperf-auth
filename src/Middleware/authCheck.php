@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MeigumiI\Auth\Middleware;
 
 use Hyperf\HttpServer\Contract\RequestInterface;
+use MeigumiI\Auth\Auth;
 use MeigumiI\Auth\TokenAuthTools;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -30,21 +31,24 @@ class authCheck implements MiddlewareInterface
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
+
+        if(empty($this->getToken())){
+            return  $this->response->json([
+               'code'=>401,
+               'msg'=>'token不能为空'
+            ]);
+        }
+
         if(!auth($this->guard())->check()){
             return  $this->response->json(['code'=>401,'msg'=>'token已失效，请重新登录']);
         }
+
         return $handler->handle($request);
     }
 
     public function getToken(){
-        $request = $this->request;
-        if($request->has('token')){
-            return $request->input('token');
-        }elseif ($request->hasHeader('token')){
-            return $request->header('token');
-        }else{
-            return '';
-        }
+        $auth = new Auth();
+        return $auth->getToken();
     }
 
     public function guard(){
