@@ -16,14 +16,18 @@ class TokenAuthTools
     private $refresh_expire;
     private $key;
     private $max_login_num;
+    private $surplus;
+    private $renewal;
 
     public function __construct()
     {
         $this->request = authRequest();
-        $this->expire = authConfig('auth.expire');
-        $this->refresh_expire = authConfig('auth.refresh_expire');
+        $this->expire = authConfig('auth.expire',3600 * 24);
+        $this->refresh_expire = authConfig('auth.refresh_expire',3600 * 24 * 30);
         $this->key = authConfig('auth.key');
-        $this->max_login_num = authConfig('auth.max_login_num');
+        $this->max_login_num = authConfig('auth.max_login_num',7);
+        $this->surplus = authConfig('auth.surplus',3600 * 2);
+        $this->renewal = authConfig('auth.renewal', 3600 * 12);
     }
 
     public function verify($token)
@@ -56,23 +60,25 @@ class TokenAuthTools
         return $raw_data;
     }
 
-    public function tokenRenewal($token){
+    public function tokenRenewal($token):bool
+    {
         $key = $this->redisKey($token);
         if(!authRedis()->exists($key)){
             return false;
         }
-
         if(Carbon::parse($this->formatToken($token)['refresh_expire']) < Carbon::now()){
+            //如果超过最大有效时间则不刷新
             return false;
         }
         $surplusTTL = authRedis()->ttl($key);
-        if(!$surplusTTL > 3600 * 2){
-            authRedis()->expire($key,3600 * 24);
+        if(!$surplusTTL > $this->surplus){
+            authRedis()->expire($key,$this->renewal);
         }
         return true;
     }
 
-    public function redisKey($token){
+    public function redisKey($token):string
+    {
         $token = explode('.',$token);
         if(!isset($token[1])){
             $sign = '';
@@ -84,17 +90,20 @@ class TokenAuthTools
         $uid = $raw_data['uid'];
         return $guard.".".$uid.".".$sign;
     }
-    public function saveRedis($token){
+    public function saveRedis($token):bool
+    {
         $raw_token = $this->formatToken($token);
         $verify_key = $raw_token['guard'].".".$raw_token['uid'].'*';
         $now_token = authRedis()->keys($verify_key);
         if(count($now_token) >= $this->max_login_num){
             $del_index = random_int(0,(int)($this->max_login_num - 1));
             $del_token = $now_token[$del_index];
-            authRedis()->del($del_token);
+            $del_result = authRedis()->del($del_token);
+            if($del_result < 1) return false;
         }
         $token_key = $this->redisKey($token);
-        authRedis()->setex($token_key,$this->expire,$token);
+        $res = authRedis()->setex($token_key,$this->expire,$token);
+        return $res === 'OK' ? true:false;
     }
     public function generate($guard, $uid)
     {
