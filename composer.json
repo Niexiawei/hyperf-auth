@@ -29,6 +29,7 @@
         "hyperf/framework": "1.0.*",
         "hyperf/redis": "^1.0",
         "hyperf/utils": "1.0.*",
+        "monolog/monolog": "^2.0",
         "nesbot/carbon": "^2.22"
     },
     "require-dev": {
