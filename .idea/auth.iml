@@ -19,6 +19,8 @@
       <excludeFolder url="file://$MODULE_DIR$/vendor/hyperf/framework" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/hyperf/http-message" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/hyperf/http-server" />
+      <excludeFolder url="file://$MODULE_DIR$/vendor/hyperf/pool" />
+      <excludeFolder url="file://$MODULE_DIR$/vendor/hyperf/redis" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/hyperf/server" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/hyperf/testing" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/hyperf/utils" />

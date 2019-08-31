@@ -1,9 +1,11 @@
 <?php
 
+use Hyperf\Redis\RedisFactory;
 use MeigumiI\Auth\Auth as auth;
 use Hyperf\Contract\ConfigInterface;
 use Hyperf\HttpServer\Contract\RequestInterface;
 use Hyperf\Utils\ApplicationContext;
+use MeigumiI\Auth\Exception\RedisDBNothingnessException;
 
 if (!function_exists('authRequest')) {
     function authRequest()
@@ -42,7 +44,17 @@ if (!function_exists('authRedis')) {
         if (!$container->has(\Redis::class)) {
             throw new \RuntimeException('ConfigInterface is missing in container.');
         }
-        return $container->get(\Redis::class);
+        $redisConfigDB = authConfig('auth.redis_db');
+
+        if(empty($redisConfigDB)){
+            $redisConfigDB  = 'default';
+        }
+        try{
+            return $container->get(RedisFactory::class)->get($redisConfigDB);
+        }catch (Exception $exception){
+            var_dump($exception->getMessage());
+            return $container->get(Redis::class);
+        }
     }
 }
 
