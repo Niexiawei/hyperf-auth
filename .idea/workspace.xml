@@ -2,12 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="1cbe532c-8465-40b0-b97e-e81ef1cf5fc3" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/src/Logs.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/auth.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/auth.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/php.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/php.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/composer.json" beforeDir="false" afterPath="$PROJECT_DIR$/composer.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Auth.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Auth.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/TokenAuthTools.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/TokenAuthTools.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/func.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/func.php" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -176,7 +172,7 @@
       <workItem from="1565919835851" duration="700000" />
       <workItem from="1566615212397" duration="4439000" />
       <workItem from="1566960835701" duration="2819000" />
-      <workItem from="1566972618009" duration="15350000" />
+      <workItem from="1566972618009" duration="18827000" />
     </task>
     <servers />
   </component>

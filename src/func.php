@@ -78,7 +78,24 @@ if(!function_exists('getClientIp')){
 if(!function_exists('getClientAgent')){
     function getClientAgent(){
         $request  = authRequest();
-        return $request->server('http_user_agent') ?? 'pc';
+        $agent = $request->getHeader('User-Agent')[0];
+        if(strpos($agent,'Windows')){
+            return 'PC';
+        }
+
+        if(strpos($agent,'iPhone')){
+            return 'iPhone';
+        }
+
+        if(strpos($agent,'iPad')){
+            return 'iPad';
+        }
+
+        if(strpos($agent,'Android')){
+            return 'Android';
+        }
+
+        return 'other';
     }
 }
 

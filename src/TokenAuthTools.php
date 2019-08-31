@@ -87,18 +87,18 @@ class TokenAuthTools
         $raw_data = json_decode(base64_decode($token[0]),true);
         $guard = $raw_data['guard'];
         $uid = $raw_data['uid'];
-        return $guard.".".$uid.".".$sign;
+        return 'user_token:'.$guard.".".$uid.".".$sign;
     }
 
-    public function getExistingToken($verify_key){
+    public function getExistingToken($token){
+        $raw_token = $this->formatToken($token);
+        $verify_key = 'user_token:'.$raw_token['guard'].".".$raw_token['uid'].'*';
         $res = authRedis()->rawCommand('scan',0,'match',$verify_key,'count',20);
         return $res[1];
     }
     public function saveRedis($token):bool
     {
-        $raw_token = $this->formatToken($token);
-        $verify_key = $raw_token['guard'].".".$raw_token['uid'].'*';
-        $now_token = $this->getExistingToken($verify_key);
+        $now_token = $this->getExistingToken($token);
         var_dump($now_token);
         if(count($now_token) >= $this->max_login_num){
             $del_index = random_int(0,(int)($this->max_login_num - 1));
@@ -118,7 +118,7 @@ class TokenAuthTools
             'expire' => Carbon::now()->addSeconds($this->expire),
             'random'=>Str::random(18),
             'http_user_agent'=>getClientAgent(),
-            'user_ip'=>getClientIp(),
+            //'user_ip'=>getClientIp(),
             'refresh_expire' => Carbon::now()->addSeconds($this->refresh_expire),
         ];
         $token_start = base64_encode(json_encode($raw_user_data));
