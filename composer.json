@@ -1,5 +1,6 @@
 {
     "name": "meigumi-i/auth",
+    "minimum-stability": "dev",
     "type": "library",
     "license": "MIT",
     "keywords": [

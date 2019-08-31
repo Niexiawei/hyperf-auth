@@ -53,3 +53,17 @@ if (!function_exists('auth')) {
         return $Auth->auth($guard);
     }
 }
+
+if(!function_exists('getClientIp')){
+    function getClientIp(){
+        $request = authRequest();
+        return $request->server('remote_addr');
+    }
+}
+
+if(!function_exists('getClientAgent')){
+    function getClientAgent(){
+        $request  = authRequest();
+        return $request->server('http_user_agent') ?? 'pc';
+    }
+}

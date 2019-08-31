@@ -10,7 +10,6 @@ use Hyperf\Utils\Str;
 
 class TokenAuthTools
 {
-
     private $request;
     private $expire;
     private $refresh_expire;
@@ -90,11 +89,17 @@ class TokenAuthTools
         $uid = $raw_data['uid'];
         return $guard.".".$uid.".".$sign;
     }
+
+    public function getExistingToken($verify_key){
+        $res = authRedis()->rawCommand('scan',0,'match',$verify_key,'count',20);
+        return $res[1];
+    }
     public function saveRedis($token):bool
     {
         $raw_token = $this->formatToken($token);
         $verify_key = $raw_token['guard'].".".$raw_token['uid'].'*';
-        $now_token = authRedis()->keys($verify_key);
+        $now_token = $this->getExistingToken($verify_key);
+        var_dump($now_token);
         if(count($now_token) >= $this->max_login_num){
             $del_index = random_int(0,(int)($this->max_login_num - 1));
             $del_token = $now_token[$del_index];
@@ -102,8 +107,7 @@ class TokenAuthTools
             if($del_result < 1) return false;
         }
         $token_key = $this->redisKey($token);
-        $res = authRedis()->setex($token_key,$this->expire,$token);
-        return $res === 'OK' ? true:false;
+        return  authRedis()->setex($token_key,$this->expire,$token);
     }
     public function generate($guard, $uid)
     {
@@ -113,13 +117,14 @@ class TokenAuthTools
             'time' => Carbon::now(),
             'expire' => Carbon::now()->addSeconds($this->expire),
             'random'=>Str::random(18),
+            'http_user_agent'=>getClientAgent(),
+            'user_ip'=>getClientIp(),
             'refresh_expire' => Carbon::now()->addSeconds($this->refresh_expire),
         ];
         $token_start = base64_encode(json_encode($raw_user_data));
         $token_sign = $this->sign($raw_user_data);
         $token = $token_start.'.'.$token_sign;
-        $this->saveRedis($token);
-        return $token;
+        return $this->saveRedis($token) ? $token : 0;
     }
 
     public function sign(array $rawData):string
