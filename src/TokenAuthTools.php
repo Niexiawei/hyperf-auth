@@ -17,6 +17,7 @@ class TokenAuthTools
     private $max_login_num;
     private $surplus;
     private $renewal;
+    private $namespace;
 
     public function __construct()
     {
@@ -27,6 +28,7 @@ class TokenAuthTools
         $this->max_login_num = authConfig('auth.max_login_num',7);
         $this->surplus = authConfig('auth.surplus',3600 * 2);
         $this->renewal = authConfig('auth.renewal', 3600 * 12);
+        $this->namespace = authConfig('auth.namespace','user_token');
     }
 
     public function verify($token)
@@ -54,7 +56,7 @@ class TokenAuthTools
     public function formatToken($token){
         $token = explode('.',$token);
         $raw_data = json_decode(base64_decode($token[0]),true);
-        $sign = $token[1];
+        $sign = $token[1] ?? '';
         $raw_data['sign'] = $sign;
         return $raw_data;
     }
@@ -87,12 +89,12 @@ class TokenAuthTools
         $raw_data = json_decode(base64_decode($token[0]),true);
         $guard = $raw_data['guard'];
         $uid = $raw_data['uid'];
-        return 'user_token:'.$guard.".".$uid.".".$sign;
+        return  $this->namespace.':'.$guard.".".$uid.".".$sign;
     }
 
     public function getExistingToken($token){
         $raw_token = $this->formatToken($token);
-        $verify_key = 'user_token:'.$raw_token['guard'].".".$raw_token['uid'].'*';
+        $verify_key =  $this->namespace.':'.$raw_token['guard'].".".$raw_token['uid'].'*';
         $res = authRedis()->rawCommand('scan',0,'match',$verify_key,'count',20);
         return $res[1];
     }
@@ -117,8 +119,7 @@ class TokenAuthTools
             'time' => Carbon::now(),
             'expire' => Carbon::now()->addSeconds($this->expire),
             'random'=>Str::random(18),
-            'http_user_agent'=>getClientAgent(),
-            //'user_ip'=>getClientIp(),
+            'user_ip'=>getClientIp(),
             'refresh_expire' => Carbon::now()->addSeconds($this->refresh_expire),
         ];
         $token_start = base64_encode(json_encode($raw_user_data));
