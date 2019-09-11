@@ -10,7 +10,6 @@ class Auth
     public function auth($guard){
         $model = $this->getModel($guard);
         if(empty($model)){
-            logs()->error('guard不存在');
             throw new GuardNothingnessException('guard不存在');
         }
         return new TokenAuthDrive($guard,$this->getToken(),$this->getModel($guard));

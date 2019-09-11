@@ -52,9 +52,8 @@ if (!function_exists('authRedis')) {
         }
         try{
             return $container->get(RedisFactory::class)->get($redisConfigDB);
-        }catch (Exception $exception){
-            var_dump($exception->getMessage());
-            \logs()->warning($exception->getMessage().'redis库不存在');
+        }catch (Throwable $throwable){
+            var_dump($throwable->getMessage());
             return $container->get(Redis::class);
         }
     }
@@ -72,12 +71,5 @@ if(!function_exists('getClientIp')){
     function getClientIp(){
         $request = authRequest();
         return $request->server('remote_addr');
-    }
-}
-
-
-if(!function_exists('logs')){
-    function logs(){
-        return (new Logs())->logs();
     }
 }

@@ -3,8 +3,6 @@
   <component name="ChangeListManager">
     <list default="true" id="1cbe532c-8465-40b0-b97e-e81ef1cf5fc3" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/TokenAuthTools.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/TokenAuthTools.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/func.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/func.php" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -179,7 +177,7 @@
       <workItem from="1567581130218" duration="599000" />
       <workItem from="1567646995089" duration="692000" />
       <workItem from="1567991650990" duration="609000" />
-      <workItem from="1568183174865" duration="559000" />
+      <workItem from="1568183174865" duration="1309000" />
     </task>
     <servers />
   </component>
