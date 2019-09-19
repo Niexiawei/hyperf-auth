@@ -2,7 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="1cbe532c-8465-40b0-b97e-e81ef1cf5fc3" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/auth.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/auth.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/php.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/php.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/func.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/func.php" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -111,7 +114,6 @@
       <path value="$PROJECT_DIR$/vendor/nesbot/carbon" />
       <path value="$PROJECT_DIR$/vendor/hyperf/redis" />
       <path value="$PROJECT_DIR$/vendor/hyperf/pool" />
-      <path value="$PROJECT_DIR$/vendor/monolog/monolog" />
     </include_path>
   </component>
   <component name="ProjectId" id="1PRW0yGYWiT7522kJGxjJdvGrjM" />
@@ -177,7 +179,8 @@
       <workItem from="1567581130218" duration="599000" />
       <workItem from="1567646995089" duration="692000" />
       <workItem from="1567991650990" duration="609000" />
-      <workItem from="1568183174865" duration="1309000" />
+      <workItem from="1568183174865" duration="3019000" />
+      <workItem from="1568860905770" duration="299000" />
     </task>
     <servers />
   </component>

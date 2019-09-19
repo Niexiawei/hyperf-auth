@@ -5,8 +5,6 @@ use MeigumiI\Auth\Auth as auth;
 use Hyperf\Contract\ConfigInterface;
 use Hyperf\HttpServer\Contract\RequestInterface;
 use Hyperf\Utils\ApplicationContext;
-use MeigumiI\Auth\Exception\RedisDBNothingnessException;
-use MeigumiI\Auth\Logs;
 
 if (!function_exists('authRequest')) {
     function authRequest()
@@ -62,7 +60,7 @@ if (!function_exists('authRedis')) {
 if (!function_exists('auth')) {
     function auth($guard)
     {
-        $Auth = new auth();
+        $Auth = ApplicationContext::getContainer()->get(auth::class);
         return $Auth->auth($guard);
     }
 }
