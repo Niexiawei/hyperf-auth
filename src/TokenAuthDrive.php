@@ -11,11 +11,11 @@ class TokenAuthDrive
     private $token;
     private $userModel;
     private $tools;
-    public function __construct($guard,$token,$model)
+    public function __construct($guard,$token,object $model)
     {
         $this->guard = $guard;
         $this->token = $token;
-        $this->userModel = new $model;
+        $this->userModel = $model;
         $this->tools = new TokenAuthTools();
     }
 
