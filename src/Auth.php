@@ -19,10 +19,6 @@ class Auth
 
     public function auth($guard)
     {
-        $model = $this->getModel($guard);
-        if (empty($model)) {
-            throw new GuardNothingnessException('guard不存在');
-        }
         return new TokenAuthDrive($guard, $this->getToken(), $this->getModel($guard));
     }
 
@@ -30,7 +26,7 @@ class Auth
     {
         try{
             $model = authConfig('auth.guards.' . $guard . '.model');
-            $object = $this->container->get($model);
+            $object = new $model;
             if (empty($object)){
                 throw new AuthModelNothingnessException('用户模型不存在');
             }
