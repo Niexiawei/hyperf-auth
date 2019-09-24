@@ -26,7 +26,7 @@ class TokenAuthTools
         $this->refresh_expire = authConfig('auth.refresh_expire',3600 * 24 * 30);
         $this->key = authConfig('auth.key');
         $this->max_login_num = authConfig('auth.max_login_num',7);
-        $this->surplus = authConfig('auth.surplus',3600 * 2);
+        $this->surplus = authConfig('auth.surplus',60 * 10);
         $this->renewal = authConfig('auth.renewal', 3600 * 12);
         $this->namespace = authConfig('auth.namespace','user_token');
     }
@@ -72,7 +72,7 @@ class TokenAuthTools
             return false;
         }
         $surplusTTL = authRedis()->ttl($key);
-        if(!$surplusTTL > $this->surplus){
+        if($surplusTTL < $this->surplus){
             authRedis()->expire($key,$this->renewal);
         }
         return true;
