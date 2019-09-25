@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MeigumiI\Auth\Middleware;
 
 use Hyperf\HttpServer\Contract\RequestInterface;
+use Hyperf\Utils\ApplicationContext;
 use MeigumiI\Auth\Auth;
 use MeigumiI\Auth\Exception\GuardNothingnessException;
 use MeigumiI\Auth\TokenAuthTools;
@@ -52,7 +53,7 @@ class authCheck implements MiddlewareInterface
     }
 
     public function getToken(){
-        $auth = new Auth();
+        $auth = ApplicationContext::getContainer()->get(Auth::class);
         return $auth->getToken();
     }
 
