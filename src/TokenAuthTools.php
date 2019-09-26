@@ -10,7 +10,6 @@ use Hyperf\Utils\Str;
 
 class TokenAuthTools
 {
-    private $request;
     private $expire;
     private $refresh_expire;
     private $key;
@@ -21,7 +20,6 @@ class TokenAuthTools
 
     public function __construct()
     {
-        $this->request = authRequest();
         $this->expire = authConfig('auth.expire',3600 * 24);
         $this->refresh_expire = authConfig('auth.refresh_expire',3600 * 24 * 30);
         $this->key = authConfig('auth.key');

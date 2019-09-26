@@ -3,6 +3,12 @@
   <component name="ChangeListManager">
     <list default="true" id="1cbe532c-8465-40b0-b97e-e81ef1cf5fc3" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Auth.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Auth.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ConfigProvider.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ConfigProvider.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Middleware/authCheck.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Middleware/authCheck.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/TokenAuthDrive.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/TokenAuthDrive.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/TokenAuthTools.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/TokenAuthTools.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/func.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/func.php" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -180,6 +186,8 @@
       <workItem from="1568860905770" duration="4724000" />
       <workItem from="1568944907543" duration="2829000" />
       <workItem from="1569292856190" duration="766000" />
+      <workItem from="1569396753365" duration="701000" />
+      <workItem from="1569469357103" duration="2701000" />
     </task>
     <servers />
   </component>

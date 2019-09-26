@@ -4,9 +4,7 @@
 namespace MeigumiI\Auth;
 
 use Hyperf\Di\Container;
-use Hyperf\Utils\ApplicationContext;
 use MeigumiI\Auth\Exception\AuthModelNothingnessException;
-use MeigumiI\Auth\Exception\GuardNothingnessException;
 
 class Auth
 {

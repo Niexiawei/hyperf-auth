@@ -5,6 +5,7 @@ use MeigumiI\Auth\Auth as auth;
 use Hyperf\Contract\ConfigInterface;
 use Hyperf\HttpServer\Contract\RequestInterface;
 use Hyperf\Utils\ApplicationContext;
+use MeigumiI\Auth\AuthInterface;
 
 if (!function_exists('authRequest')) {
     function authRequest()
@@ -60,7 +61,7 @@ if (!function_exists('authRedis')) {
 if (!function_exists('auth')) {
     function auth($guard)
     {
-        $Auth = ApplicationContext::getContainer()->get(auth::class);
+        $Auth = ApplicationContext::getContainer()->get(AuthInterface::class);
         return $Auth->auth($guard);
     }
 }

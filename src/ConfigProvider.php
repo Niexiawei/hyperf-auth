@@ -18,6 +18,7 @@ class ConfigProvider
     {
         return [
             'dependencies' => [
+                AuthInterface::class => Auth::class
             ],
             'commands' => [
             ],
@@ -30,7 +31,7 @@ class ConfigProvider
                 [
                     'id' => 'config',
                     'description' => 'The config of auth.',
-                    'source' => __DIR__ . '/../publish/auth.php',
+                    'source' => __DIR__ . '../publish/auth.php',
                     'destination' => BASE_PATH . '/config/autoload/auth.php',
                 ],
             ],
