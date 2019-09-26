@@ -32,11 +32,11 @@ class TokenAuthDrive
     }
 
     public function check(){
-        $user = $this->user();
-        if(empty($user)){
-            return false;
+        $uid = $this->tools->getId($this->token);
+        if($uid != 0){
+            $this->tools->tokenRenewal($this->token);
         }
-        return true;
+        return $uid == 0 ? false:true;
     }
 
     public function id(){
