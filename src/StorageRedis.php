@@ -37,18 +37,59 @@ class StorageRedis
     }
 
     public function refresh(){
-
+        
     }
 
-    public function delete(){
-
+    public function delete($token){
+        $origin = $this->formatToken($token);
+        $key = $this->redisHashListKey($origin['guard']);
+        $hashKey = $this->hashKey($token);
+        $token_info = $this->redis->hGet($key,$hashKey);
+        $token_info = json_decode($token_info,true);
+        if($token_info['token'] == $token){
+            $this->redis->hDel($key,$hashKey);
+        }
     }
 
     public function verify(){
 
     }
 
-    public function generate($guard, $uid)
+    private function tokenNumber(string $guard,int $uid){
+        $tokens = Context::get('tokens') ?? $this->userAllToken($guard,$uid);
+        return count($tokens);
+    }
+
+    public function formatToken($token){
+        $token = explode('.',$token);
+        $raw_data = json_decode(base64_decode($token[0]),true);
+        $sign = $token[1] ?? '';
+        $raw_data['sign'] = $sign;
+        return $raw_data;
+    }
+    public function userAllToken($guard,$id){
+        $it = null;
+        $arr = [];
+        while ($key_arr = $this->redis->hScan($this->redisHashListKey($guard),$it,$id.'::*')){
+            foreach ($key_arr as $key => $value){
+                $arr[$key] = json_decode($value,true);
+            }
+        }
+        Context::set('tokens',$arr);
+        return $arr;
+    }
+
+    private function getOldToken(string $guard,int $uid){
+        $tokens = Context::get('tokens') ?? $this->userAllToken($guard,$uid);
+        $number = count($tokens);
+        if($number > 0){
+            $tokens_key = array_values($tokens);
+            return $tokens_key[$number];
+        }
+        return '';
+    }
+
+    public function generate(string $guard,int $uid)
     {
         $raw_user_data = [
             'guard' => $guard,
@@ -63,19 +104,24 @@ class StorageRedis
         $token = $token_start.'.'.$token_sign;
         Context::set('raw_user_data',$raw_user_data);
         Context::set('token',$token);
-        $this->save($guard,$uid);
+        if($this->tokenNumber($guard,$uid) >= $this->max_login_num){
+            $oldToken = $this->getOldToken($guard,$uid);
+            $this->delete($oldToken);
+        }
+        $this->save();
         return $token;
     }
 
-    private function save($guard,$uid){
-        $redis_key = $this->redisHashListKey($guard);
+    private function save(){
         $raw_data = Context::get('raw_user_data');
         $token = Context::get('token');
-        $this->redis->hSet($redis_key,$this->hashKey($uid),json_encode(['raw'=>$raw_data,'token'=>$token]));
+        $redis_key = $this->redisHashListKey($raw_data['guard']);
+        $this->redis->hSet($redis_key,$this->hashKey($token),json_encode(['raw'=>$raw_data,'token'=>$token]));
     }
 
-    private function hashKey($uid){
-        return (string)$uid.Context::get('token_sign');
+    private function hashKey($token){
+        $origin = $this->formatToken($token);
+        return (string)$origin['uid'].'::'.$origin['sign'];
     }
 
     private function redisHashListKey($guard):string
@@ -84,8 +130,6 @@ class StorageRedis
     }
 
     private function tokenSign($origin_token){
-        $sign =  md5($origin_token.$this->key);
-        Context::set('token_sign',$sign);
-        return $sign;
+        return md5($origin_token.$this->key);
     }
 }
