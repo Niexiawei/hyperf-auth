@@ -37,7 +37,7 @@ class StorageRedis
     }
 
     public function refresh(){
-        
+
     }
 
     public function delete($token){
@@ -70,7 +70,7 @@ class StorageRedis
     public function userAllToken($guard,$id){
         $it = null;
         $arr = [];
-        while ($key_arr = $this->redis->hScan($this->redisHashListKey($guard),$it,$id.'::*')){
+        while ($key_arr = $this->redis->hScan($this->redisHashListKey($guard),$it,$id.'-*')){
             foreach ($key_arr as $key => $value){
                 $arr[$key] = json_decode($value,true);
             }
@@ -121,7 +121,7 @@ class StorageRedis
 
     private function hashKey($token){
         $origin = $this->formatToken($token);
-        return (string)$origin['uid'].'::'.$origin['sign'];
+        return (string)$origin['uid'].'-'.$origin['sign'];
     }
 
     private function redisHashListKey($guard):string
