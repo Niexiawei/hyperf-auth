@@ -36,8 +36,25 @@ class StorageRedis
         //->get($config->get('auth.redis_db'))
     }
 
-    public function refresh(){
+    private function getTokenInfo($token){
+        $origin = $this->formatToken($token);
+        $raw_token = $this->redis->hGet($this->redisHashListKey($origin['guard']),$this->hashKey($token));
+        if(empty($raw_token)){
+            return [];
+        }
+        return json_decode($raw_token,true);
+    }
 
+    public function refresh($token){
+        $raw_token = $this->getTokenInfo($token);
+        $user_info = $raw_token['raw'];
+        if($user_info['refresh_expire'] > Carbon::now()->getTimestamp()){
+           if($user_info['expire'] - Carbon::now()->getTimestamp() < $this->surplus){
+               $user_info['expire'] = Carbon::now()->addSeconds($this->renewal)->getTimestamp();
+               $redis_key = $this->redisHashListKey($user_info['guard']);
+               $this->redis->hSet($redis_key,$this->hashKey($token),json_encode(['raw'=>$user_info,'token'=>$token]));
+           }
+        }
     }
 
     public function delete($token){
@@ -51,12 +68,24 @@ class StorageRedis
         }
     }
 
-    public function verify(){
-
+    public function verify($token):array
+    {
+        $raw_token = $this->getTokenInfo($token);
+        if(empty($raw_token)){
+            return [];
+        }
+        if($token !== $raw_token['token']){
+            return [];
+        }
+        if(Carbon::now()->getTimestamp() > $raw_token['raw']['expire']){
+            return  [];
+        }
+        $this->refresh($token);
+        return  $raw_token['raw'];
     }
 
     private function tokenNumber(string $guard,int $uid){
-        $tokens = Context::get('tokens') ?? $this->userAllToken($guard,$uid);
+        $tokens = $this->userAllToken($guard,$uid);
         return count($tokens);
     }
 
@@ -65,6 +94,7 @@ class StorageRedis
         $raw_data = json_decode(base64_decode($token[0]),true);
         $sign = $token[1] ?? '';
         $raw_data['sign'] = $sign;
+        Context::set('format_token',$raw_data);
         return $raw_data;
     }
     public function userAllToken($guard,$id){
@@ -80,11 +110,11 @@ class StorageRedis
     }
 
     private function getOldToken(string $guard,int $uid){
-        $tokens = Context::get('tokens') ?? $this->userAllToken($guard,$uid);
-        $number = count($tokens);
+        $tokens = $this->userAllToken($guard,$uid);
+        $number = count($tokens) - 1;
         if($number > 0){
             $tokens_key = array_values($tokens);
-            return $tokens_key[$number];
+            return $tokens_key[$number]['token'];
         }
         return '';
     }
@@ -94,10 +124,10 @@ class StorageRedis
         $raw_user_data = [
             'guard' => $guard,
             'uid' => $uid,
-            'time' => Carbon::now(),
-            'expire' => Carbon::now()->addSeconds($this->expire),
+            'create_time' => Carbon::now()->getTimestamp(),
+            'expire' => Carbon::now()->addSeconds($this->expire)->getTimestamp(),
             'random'=>Str::random(20),
-            'refresh_expire' => Carbon::now()->addSeconds($this->refresh_expire),
+            'refresh_expire' => Carbon::now()->addSeconds($this->refresh_expire)->getTimestamp(),
         ];
         $token_start = base64_encode(json_encode($raw_user_data));
         $token_sign = $this->tokenSign($token_start);
@@ -106,7 +136,9 @@ class StorageRedis
         Context::set('token',$token);
         if($this->tokenNumber($guard,$uid) >= $this->max_login_num){
             $oldToken = $this->getOldToken($guard,$uid);
-            $this->delete($oldToken);
+            if(!empty($oldToken)){
+                $this->delete($oldToken);
+            }
         }
         $this->save();
         return $token;
@@ -120,7 +152,7 @@ class StorageRedis
     }
 
     private function hashKey($token){
-        $origin = $this->formatToken($token);
+        $origin =Context::get('format_token') ?? $this->formatToken($token);
         return (string)$origin['uid'].'-'.$origin['sign'];
     }
 
