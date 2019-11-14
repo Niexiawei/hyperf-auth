@@ -1,15 +1,15 @@
 {
-    "name": "meigumi-i/auth",
+    "name": "niexiawei/hyperf-auth",
     "type": "library",
     "license": "MIT",
     "keywords": [
         "php",
         "hyperf"
     ],
-    "description": "auth token",
+    "description": "适用于hyperf的Auth组件",
     "autoload": {
         "psr-4": {
-            "MeigumiI\\Auth\\": "src/"
+            "Niexiawei\\Auth\\": "src/"
         },
         "files": [
             "src/func.php"
@@ -47,7 +47,7 @@
     },
     "extra": {
         "hyperf": {
-            "config": "MeigumiI\\Auth\\ConfigProvider"
+            "config": "Niexiawei\\Auth\\ConfigProvider"
         }
     }
 }

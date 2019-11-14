@@ -1,7 +1,7 @@
 <?php
 
 
-namespace MeigumiI\Auth\Exception;
+namespace Niexiawei\Auth\Exception;
 
 
 class RedisDBNothingnessException  extends \Exception

@@ -1,10 +1,10 @@
 <?php
 
 
-namespace MeigumiI\Auth;
+namespace Niexiawei\Auth;
 
 use Hyperf\Di\Container;
-use MeigumiI\Auth\Exception\AuthModelNothingnessException;
+use Niexiawei\Auth\Exception\AuthModelNothingnessException;
 
 class Auth
 {

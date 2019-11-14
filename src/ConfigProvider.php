@@ -10,7 +10,7 @@ declare(strict_types=1);
  * @license  https://github.com/hyperf-cloud/hyperf/blob/master/LICENSE
  */
 
-namespace MeigumiI\Auth;
+namespace Niexiawei\Auth;
 
 class ConfigProvider
 {
@@ -18,15 +18,19 @@ class ConfigProvider
     {
         return [
             'dependencies' => [
-                AuthInterface::class => Auth::class
+                AuthInterface::class => Auth::class,
+                StorageRedisInterface::class => StorageRedis::class
             ],
             'commands' => [
             ],
-            'scan' => [
-                'paths' => [
-                    __DIR__,
+            'annotations' => [
+                'scan' => [
+                    'paths' => [
+                        __DIR__,
+                    ],
                 ],
             ],
+            'listeners' => [],
             'publish' => [
                 [
                     'id' => 'config',

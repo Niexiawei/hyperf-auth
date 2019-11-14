@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace MeigumiI\Auth\Middleware;
+namespace Niexiawei\Auth\Middleware;
 
 use Hyperf\HttpServer\Contract\RequestInterface;
 use Hyperf\Utils\ApplicationContext;
-use MeigumiI\Auth\Auth;
-use MeigumiI\Auth\AuthInterface;
-use MeigumiI\Auth\Exception\GuardNothingnessException;
-use MeigumiI\Auth\TokenAuthTools;
+use Niexiawei\Auth\Auth;
+use Niexiawei\Auth\AuthInterface;
+use Niexiawei\Auth\Exception\GuardNothingnessException;
+use Niexiawei\Auth\TokenAuthTools;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Server\MiddlewareInterface;

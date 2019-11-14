@@ -17,8 +17,9 @@ return [
     'expire'=>3600 * 24,//token过期时间
     'refresh_expire'=>3600 * 24 *30,//token最长有效期
     'key'=>'key', //务必设置新的key
-    'max_login_num'=>7, // 最大登录客户端
+    'max_login_num' => 7, // 最大登录客户端
     'surplus'=>3600 * 2, //token有效期刷新界线
     'renewal' => 3600 * 12, //token续期增加时间
-    'redis_db'=>'default' // token 储存使用的库  对应 redis 配置文件
+    'redis_db'=>'default', // token 储存使用的库  对应 redis 配置文件
+    'hash_list_key'=>'user_token_',
 ];

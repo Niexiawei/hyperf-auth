@@ -1,7 +1,7 @@
 <?php
 
 
-namespace MeigumiI\Auth;
+namespace Niexiawei\Auth;
 
 
 class TokenAuthDrive
