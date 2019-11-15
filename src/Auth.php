@@ -22,21 +22,12 @@ class Auth
         $this->config = $container->get(ConfigInterface::class);
         $this->storage = $container->get(StorageRedisInterface::class);
     }
-
-    public function auth($guard)
-    {
-        //return new TokenAuthDrive($guard, $this->getToken(), $this->getModel($guard));
-        Context::set('guard',$guard);
-        Context::set('token',$this->getToken());
-        return $this;
-    }
-
-    public function login(object $user){
-        return $this->storage->generate(Context::get('guard'),$user->id);
+    public function login($guard,object $user){
+        return $this->storage->generate($guard,$user->id);
     }
 
     public function check(){
-        $user_info = $this->storage->verify(Context::get('token'));
+        $user_info = $this->storage->verify($this->getToken());
         Context::set('user_info',$user_info);
         if(empty($user_info)){
             return false;
@@ -53,14 +44,15 @@ class Auth
 
     public function logout():bool
     {
-        $this->storage->delete(Context::get('token'));
+        $this->storage->delete($this->getToken());
         return true;
     }
 
     public function user(){
         $id = $this->id();
         if($id > 0){
-            return $this->getModel(Context::get('guard'))->find($id);
+            $guard = $this->formatToken()['guard'];
+            return $this->getModel($guard)->find($id);
         }
         return [];
     }
@@ -82,12 +74,17 @@ class Auth
 
     public function getToken()
     {
-        if ($this->request->has('token')) {
-            return $this->request->input('token');
-        } elseif ($this->request->hasHeader('token')) {
-            return $this->request->header('token');
-        } else {
-            return '';
+        if(!empty(Context::get('token'))){
+            return Context::get('token');
         }
+        if ($this->request->has('token')) {
+            $token =  $this->request->input('token');
+        } elseif ($this->request->hasHeader('token')) {
+            $token = $this->request->header('token');
+        } else {
+            $token = '';
+        }
+        Context::set('token',$token);
+        return $token;
     }
 }

@@ -4,10 +4,9 @@ use Hyperf\Utils\ApplicationContext;
 use Niexiawei\Auth\AuthInterface as Auth;
 
 if (!function_exists('auth')) {
-    function auth($guard)
+    function auth()
     {
-        $Auth = ApplicationContext::getContainer()->get(Auth::class);
-        return $Auth->auth($guard);
+       return ApplicationContext::getContainer()->get(Auth::class);
     }
 }
 

@@ -6,6 +6,7 @@ namespace Niexiawei\Auth\Middleware;
 
 use Hyperf\HttpServer\Contract\RequestInterface;
 use Hyperf\Utils\ApplicationContext;
+use Hyperf\Utils\Context;
 use Niexiawei\Auth\AuthInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -33,7 +34,9 @@ class UserAuthenticationMiddleware implements MiddlewareInterface
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-
+        if(Context::get('isAuth') == false){
+            return $handler->handle($request);
+        }
         if(empty($this->AuthInterface->getToken())){
             return  $this->response->json([
                'code'=>401,
@@ -42,16 +45,12 @@ class UserAuthenticationMiddleware implements MiddlewareInterface
         }
 
         try{
-            if(!auth($this->guard())->check()){
+            if(!auth()->check()){
                 return  $this->response->json(['code'=>401,'msg'=>'token已失效，请重新登录']);
             }
         }catch (\Throwable $exception){
             return  $this->response->json(['code'=>401,'msg'=>'非法的Token']);
         }
         return $handler->handle($request);
-    }
-    private function guard(){
-        $user_info = $this->AuthInterface->formatToken();
-        return $user_info['guard'] ?? '';
     }
 }
