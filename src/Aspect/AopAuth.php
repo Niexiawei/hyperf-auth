@@ -3,7 +3,7 @@
 
 namespace Niexiawei\Auth\Aspect;
 
-use Niexiawei\Auth\Annotation\Auth;
+use Niexiawei\Auth\Annotation\CheckUser as Auth;
 use Hyperf\Di\Annotation\Aspect;
 use Hyperf\Di\Aop\AbstractAspect;
 use Hyperf\Di\Aop\ProceedingJoinPoint;
@@ -34,13 +34,13 @@ class AopAuth extends AbstractAspect
 
     public function process(ProceedingJoinPoint $proceedingJoinPoint)
     {
-        if(!empty($classParam = $annotation = $proceedingJoinPoint->getAnnotationMetadata()->class[Auth::class])){
-            $annotation = $classParam;
+        if(!empty($classParam = $proceedingJoinPoint->getAnnotationMetadata()->class)){
+            $annotation = $proceedingJoinPoint->getAnnotationMetadata()->class[Auth::class];
         }else{
             $annotation = $proceedingJoinPoint->getAnnotationMetadata()->method[Auth::class];
         }
         if($annotation->is_auth === true){
-            if(\auth()->check()){
+            if(auth()->check()){
                 return $proceedingJoinPoint->process();
             }else{
                 return $this->response->json(['code'=>401,'msg'=>'你还未登录']);

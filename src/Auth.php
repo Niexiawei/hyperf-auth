@@ -27,17 +27,21 @@ class Auth
     }
 
     public function check(){
-        $user_info = $this->storage->verify($this->getToken());
-        Context::set('user_info',$user_info);
+        $token = $this->getToken();
+        if(empty($token)){
+            return false;
+        }
+        $user_info = $this->storage->verify($token);
         if(empty($user_info)){
             return false;
         }
+        Context::set('user_info',$user_info);
         return true;
     }
 
     public function id(){
         if($this->check()){
-            return Context::get('user_info')['id'];
+            return Context::get('user_info')['uid'];
         }
         return 0;
     }
