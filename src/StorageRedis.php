@@ -32,8 +32,18 @@ class StorageRedis
         $this->surplus = $config->get('auth.surplus',60 * 2);
         $this->renewal = $config->get('auth.renewal',3600 * 12);
         $this->hash_list_key = $config->get('auth.hash_list_key','user_token');
-        $this->redis = $container->get(\Redis::class);
-        //->get($config->get('auth.redis_db'))
+        $this->getDb($container);
+    }
+
+    private function getDb(ContainerInterface $container):void
+    {
+        $settingDb = $this->config->get('auth.redis_db');
+        $redis_config = $this->config->has('redis.'.$settingDb);
+        if($redis_config){
+            $this->redis = $container->get(\Redis::class)->get($settingDb);
+        }else{
+            $this->redis = $container->get(\Redis::class);
+        }
     }
 
     private function getTokenInfo($token){
@@ -152,7 +162,7 @@ class StorageRedis
     }
 
     private function hashKey($token){
-        $origin =Context::get('format_token') ?? $this->formatToken($token);
+        $origin = Context::get('format_token') ?? $this->formatToken($token);
         return (string)$origin['uid'].'-'.$origin['sign'];
     }
 

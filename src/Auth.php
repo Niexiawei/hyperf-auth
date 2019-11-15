@@ -51,19 +51,25 @@ class Auth
         return 0;
     }
 
-    public function logout(){
+    public function logout():bool
+    {
         $this->storage->delete(Context::get('token'));
+        return true;
+    }
+
+    public function user(){
+        $id = $this->id();
+        if($id > 0){
+            return $this->getModel(Context::get('guard'))->find($id);
+        }
+        return [];
     }
 
     private function getModel($guard): object
     {
         try{
             $model = $this->config->get('auth.guards.' . $guard . '.model');
-            $object = new $model;
-            if (empty($object)){
-                throw new AuthModelNothingnessException('用户模型不存在');
-            }
-            return  $object;
+            return new $model;
         }catch (\Exception $exception){
             throw new AuthModelNothingnessException('用户模型不存在');
         }
