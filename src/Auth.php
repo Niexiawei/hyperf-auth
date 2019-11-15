@@ -22,7 +22,7 @@ class Auth
         $this->config = $container->get(ConfigInterface::class);
         $this->storage = $container->get(StorageRedisInterface::class);
     }
-    public function login($guard,object $user){
+    public function login(string $guard,object $user){
         return $this->storage->generate($guard,$user->id);
     }
 
