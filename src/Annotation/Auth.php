@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Niexiawei\Annotation;
+namespace Niexiawei\Auth\Annotation;
 
 
 use Hyperf\Di\Annotation\AbstractAnnotation;

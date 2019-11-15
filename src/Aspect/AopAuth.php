@@ -1,10 +1,9 @@
 <?php
 
 
-namespace Niexiawei\Aspect;
+namespace Niexiawei\Auth\Aspect;
 
-
-use Niexiawei\Annotation\Auth;
+use Niexiawei\Auth\Annotation\Auth;
 use Hyperf\Di\Annotation\Aspect;
 use Hyperf\Di\Aop\AbstractAspect;
 use Hyperf\Di\Aop\ProceedingJoinPoint;
