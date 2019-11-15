@@ -20,20 +20,8 @@ class ScanExpireTokenCrontab
     public function __construct(ContainerInterface $container)
     {
         $this->config = $container->get(ConfigInterface::class);
-        $this->getRedisDb($container);
-        //$this->redis = $container->get(\Redis::class);
+        $this->redis = $container->get(\Redis::class);
     }
-
-    public function getRedisDb(ContainerInterface $container){
-        $settingDb = $this->config->get('auth.redis_db');
-        $redis_config = $this->config->has('redis.'.$settingDb);
-        if($redis_config){
-            $this->redis = $container->get(\Redis::class)->get($settingDb);
-        }else{
-            $this->redis = $container->get(\Redis::class);
-        }
-    }
-
     public function scan(){
         $guards = $this->getTokenStorageHashList();
         $this->scanExpireToken($guards);

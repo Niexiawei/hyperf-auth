@@ -32,18 +32,7 @@ class StorageRedis
         $this->surplus = $config->get('auth.surplus',60 * 2);
         $this->renewal = $config->get('auth.renewal',3600 * 12);
         $this->hash_list_key = $config->get('auth.hash_list_key','user_token');
-        $this->getDb($container);
-    }
-
-    private function getDb(ContainerInterface $container):void
-    {
-        $settingDb = $this->config->get('auth.redis_db');
-        $redis_config = $this->config->has('redis.'.$settingDb);
-        if($redis_config){
-            $this->redis = $container->get(\Redis::class)->get($settingDb);
-        }else{
-            $this->redis = $container->get(\Redis::class);
-        }
+        $this->redis = $container->get(\Redis::class);
     }
 
     private function getTokenInfo($token){
