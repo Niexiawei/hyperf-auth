@@ -8,6 +8,7 @@ use Hyperf\HttpServer\Contract\RequestInterface;
 use Hyperf\Utils\ApplicationContext;
 use Hyperf\Utils\Context;
 use Niexiawei\Auth\AuthInterface;
+use Niexiawei\Auth\IsAuthInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -34,7 +35,7 @@ class UserAuthenticationMiddleware implements MiddlewareInterface
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        if(Context::get('isAuth') == false){
+        if(Context::get(IsAuthInterface::class) == false){
             return $handler->handle($request);
         }
         if(empty($this->AuthInterface->getToken())){

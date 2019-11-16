@@ -9,6 +9,7 @@ use Hyperf\Di\Aop\AbstractAspect;
 use Hyperf\Di\Aop\ProceedingJoinPoint;
 use Hyperf\HttpServer\Contract\ResponseInterface;
 use Hyperf\Utils\Context;
+use Niexiawei\Auth\IsAuthInterface;
 use Psr\Container\ContainerInterface;
 
 /**
@@ -46,7 +47,7 @@ class AopAuth extends AbstractAspect
                 return $this->response->json(['code'=>401,'msg'=>'你还未登录']);
             }
         }else{
-            Context::set('isAuth',false);
+            Context::set(IsAuthInterface::class,false);
             return $proceedingJoinPoint->process();
         }
     }
