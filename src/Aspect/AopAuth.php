@@ -37,14 +37,15 @@ class AopAuth extends AbstractAspect
 
     public function process(ProceedingJoinPoint $proceedingJoinPoint)
     {
-        var_dump($proceedingJoinPoint->className);
-        var_dump($proceedingJoinPoint->methodName);
-        if(!empty($classParam = $proceedingJoinPoint->getAnnotationMetadata()->class)){
-            $annotation = $proceedingJoinPoint->getAnnotationMetadata()->class[Auth::class];
+        $is_auth = true;
+        $methodAnnotation = $proceedingJoinPoint->getAnnotationMetadata()->method;
+        $classAnnotation = $proceedingJoinPoint->getAnnotationMetadata()->class;
+        if(empty($methodAnnotation)){
+            $is_auth = $classAnnotation[Auth::class]->is_auth;
         }else{
-            $annotation = $proceedingJoinPoint->getAnnotationMetadata()->method[Auth::class];
+            $is_auth = $methodAnnotation[Auth::class]->is_auth;
         }
-        if($annotation->is_auth === true){
+        if($is_auth === true){
             if($this->auth->check()){
                 return $proceedingJoinPoint->process();
             }else{
