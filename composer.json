@@ -13,9 +13,7 @@
         "psr-4": {
             "Niexiawei\\Auth\\": "src/"
         },
-        "files": [
-            "src/func.php"
-        ]
+        "files": []
     },
     "autoload-dev": {
         "psr-4": {
