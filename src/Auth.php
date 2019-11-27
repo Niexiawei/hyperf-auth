@@ -48,6 +48,9 @@ class Auth
 
     public function logout():bool
     {
+        if(!$this->check()){
+            return  false;
+        }
         $this->storage->delete($this->getToken());
         return true;
     }

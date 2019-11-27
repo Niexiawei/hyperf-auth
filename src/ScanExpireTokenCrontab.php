@@ -5,7 +5,9 @@ namespace Niexiawei\Auth;
 use Hyperf\Contract\ConfigInterface;
 use Hyperf\Crontab\Annotation\Crontab;
 use Hyperf\Utils\WaitGroup;
+use Niexiawei\Auth\Event\ExpireScanEvent;
 use Psr\Container\ContainerInterface;
+use Psr\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Class ScanExpireTokenCrontab
@@ -17,10 +19,12 @@ class ScanExpireTokenCrontab
 {
     private $config;
     private $redis;
+    protected $event;
     public function __construct(ContainerInterface $container)
     {
         $this->config = $container->get(ConfigInterface::class);
         $this->redis = $container->get(\Redis::class);
+        $this->event = $container->get(EventDispatcherInterface::class);
     }
     public function scan(){
         $guards = $this->getTokenStorageHashList();
@@ -37,7 +41,8 @@ class ScanExpireTokenCrontab
             });
         }
         $wg->wait();
-        var_dump(date('Y-m-d H:i:s').'扫描过期Token执行成功');
+        $this->event->dispatch(new ExpireScanEvent());
+
     }
 
     public function scanHashToken(string $hashKey){

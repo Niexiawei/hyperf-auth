@@ -8,7 +8,11 @@ use Carbon\Carbon;
 use Hyperf\Contract\ConfigInterface;
 use Hyperf\Utils\Context;
 use Hyperf\Utils\Str;
+use Niexiawei\Auth\Event\TokenCreate;
+use Niexiawei\Auth\Event\TokenRefresh;
 use Psr\Container\ContainerInterface;
+use Psr\EventDispatcher\EventDispatcherInterface;
+use function Sodium\add;
 
 class StorageRedis
 {
@@ -21,6 +25,7 @@ class StorageRedis
     private $renewal;
     private $hash_list_key;
     private $redis;
+    protected $event;
 
     public function __construct(ContainerInterface $container)
     {
@@ -33,6 +38,7 @@ class StorageRedis
         $this->renewal = $config->get('auth.renewal',3600 * 12);
         $this->hash_list_key = $config->get('auth.hash_list_key','user_token');
         $this->redis = $container->get(\Redis::class);
+        $this->event = $container->get(EventDispatcherInterface::class);
     }
 
     private function getTokenInfo($token){
@@ -80,6 +86,7 @@ class StorageRedis
             return  [];
         }
         $this->refresh($token);
+        $this->event->dispatch(new TokenRefresh($token,time()));
         return  $raw_token['raw'];
     }
 
@@ -140,6 +147,7 @@ class StorageRedis
             }
         }
         $this->save();
+        $this->event->dispatch(new TokenCreate($token,$uid,$guard));
         return $token;
     }
 
