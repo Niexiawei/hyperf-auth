@@ -59,6 +59,8 @@ class StorageRedis
                $redis_key = $this->redisHashListKey($user_info['guard']);
                $this->redis->hSet($redis_key,$this->hashKey($token),json_encode(['raw'=>$user_info,'token'=>$token]));
            }
+        }else{
+            $this->delete($token);
         }
     }
 
