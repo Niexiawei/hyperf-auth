@@ -12,7 +12,7 @@ use Psr\EventDispatcher\EventDispatcherInterface;
 /**
  * Class ScanExpireTokenCrontab
  * @package Niexiawei\Auth
- * @Crontab(name="ScanExpireTokenCrontab",rule="*\/10 * * * *",singleton=true,onOneServer=true,callback="scan")
+ * @Crontab(name="ScanExpireTokenCrontab",rule="* *\/2 * * *",singleton=true,onOneServer=true,callback="scan")
  */
 
 class ScanExpireTokenCrontab
