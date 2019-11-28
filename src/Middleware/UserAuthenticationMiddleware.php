@@ -35,9 +35,9 @@ class UserAuthenticationMiddleware implements MiddlewareInterface
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        if(Context::get(IsAuthInterface::class) == false){
-            return $handler->handle($request);
-        }
+//        if(Context::get(IsAuthInterface::class) == false){
+//            return $handler->handle($request);
+//        }
         if(empty($this->AuthInterface->getToken())){
             return  $this->response->json([
                'code'=>401,

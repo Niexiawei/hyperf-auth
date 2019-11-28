@@ -12,8 +12,5 @@ use Hyperf\Di\Annotation\AbstractAnnotation;
 
 class CheckUser extends AbstractAnnotation
 {
-    /**
-     * @var bool
-     */
-    public $is_auth = true;
+
 }
