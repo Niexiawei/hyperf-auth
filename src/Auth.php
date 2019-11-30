@@ -94,4 +94,10 @@ class Auth
         Context::set('token',$token);
         return $token;
     }
+
+    public function setToken($token):Auth
+    {
+        Context::set('token',$token);
+        return $this;
+    }
 }

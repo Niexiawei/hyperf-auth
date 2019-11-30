@@ -13,4 +13,5 @@ interface AuthInterface
     public function user();
     public function formatToken();
     public function getToken();
+    public function setToken($token):Auth;
 }
