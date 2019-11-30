@@ -120,7 +120,7 @@ class StorageRedis
     private function getOldToken(string $guard,int $uid){
         $tokens = $this->userAllToken($guard,$uid);
         $number = count($tokens) - 1;
-        if($number > 0){
+        if($number >= 0){
             $tokens_key = array_values($tokens);
             return $tokens_key[$number]['token'];
         }
