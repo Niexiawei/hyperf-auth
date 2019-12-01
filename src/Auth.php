@@ -26,6 +26,13 @@ class Auth
         return $this->storage->generate($guard,$user->id);
     }
 
+    public function guard(){
+        if($this->check()){
+            return Context::get('user_info')['guard'];
+        }
+        return '';
+    }
+
     public function check(){
         $token = $this->getToken();
         if(empty($token)){
