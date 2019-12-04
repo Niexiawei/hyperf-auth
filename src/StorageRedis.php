@@ -58,6 +58,7 @@ class StorageRedis
                $user_info['expire'] = Carbon::now()->addSeconds($this->renewal)->getTimestamp();
                $redis_key = $this->redisHashListKey($user_info['guard']);
                $this->redis->hSet($redis_key,$this->hashKey($token),json_encode(['raw'=>$user_info,'token'=>$token]));
+               $this->event->dispatch(new TokenRefresh($token,time()));
            }
         }else{
             $this->delete($token);
@@ -85,10 +86,10 @@ class StorageRedis
             return [];
         }
         if(Carbon::now()->getTimestamp() > $raw_token['raw']['expire']){
+            $this->delete($token);
             return  [];
         }
         $this->refresh($token);
-        $this->event->dispatch(new TokenRefresh($token,time()));
         return  $raw_token['raw'];
     }
 
