@@ -46,7 +46,7 @@ class StorageRedis
         $key = $this->getTokenKey($token);
         $raw_token = $this->redis->get($key);
         if (empty($raw_token)) {
-            return [];
+            return [$key,''];
         }
         $raw_token = json_decode($raw_token, true);
         return [$key,$raw_token];

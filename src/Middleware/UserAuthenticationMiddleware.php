@@ -53,7 +53,7 @@ class UserAuthenticationMiddleware implements MiddlewareInterface
                 return $this->response->json(['code' => 401, 'msg' => 'token已失效，请重新登录']);
             }
             if ($this->guard !== -1) {
-                if (!$this->AuthInterface->guard() == $this->guard) {
+                if ($this->AuthInterface->guard() !== $this->guard) {
                     return $this->response->json(['code' => 401, 'msg' => '无效的token']);
                 }
             }
