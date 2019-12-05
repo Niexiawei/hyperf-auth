@@ -130,6 +130,7 @@ class StorageRedis
 
     public function generate(string $guard,int $uid)
     {
+        $this->deleteExpireToken($guard,$uid);
         $raw_user_data = [
             'guard' => $guard,
             'uid' => $uid,
@@ -152,6 +153,20 @@ class StorageRedis
         $this->save();
         $this->event->dispatch(new TokenCreate($token,$uid,$guard));
         return $token;
+    }
+
+
+    private function deleteExpireToken($guard,$uid){
+        $hashListKey = $this->config->get('auth.hash_list_key');
+        $it = null;
+        while ($arr = $this->redis->hScan($hashListKey,$it,$uid.'-*')){
+            foreach ($arr as $key => $value){
+                $token_info = json_decode($value,true);
+                if($token_info['raw']['expire'] < time()){
+                    $this->redis->hDel($hashListKey,$key);
+                }
+            }
+        }
     }
 
     private function save(){

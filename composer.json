@@ -25,7 +25,6 @@
         "ext-json": "*",
         "ext-redis": "*",
         "ext-swoole": ">=4.3",
-        "hyperf/crontab": "^1.1",
         "hyperf/di": "~1.1.0",
         "hyperf/framework": "~1.1.0",
         "hyperf/redis": "^1.0",
