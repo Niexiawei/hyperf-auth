@@ -20,5 +20,5 @@ return [
     'max_login_num' => 7, // 最大登录客户端
     'surplus'=>3600 * 2, //token有效期刷新界线
     'renewal' => 3600 * 12, //token续期增加时间
-    'hash_list_key'=>'user_token_',
+    'storage_prefix'=>'user_token_',
 ];

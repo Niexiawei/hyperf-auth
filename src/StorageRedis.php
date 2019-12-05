@@ -23,7 +23,7 @@ class StorageRedis
     private $max_login_num;
     private $surplus;
     private $renewal;
-    private $hash_list_key;
+    private $storage_prefix;
     private $redis;
     protected $event;
 
@@ -36,48 +36,45 @@ class StorageRedis
         $this->max_login_num = $config->get('auth.max_login_num', 7);
         $this->surplus = $config->get('auth.surplus', 60 * 2);
         $this->renewal = $config->get('auth.renewal', 3600 * 12);
-        $this->hash_list_key = $config->get('auth.hash_list_key', 'user_token');
+        $this->storage_prefix = $config->get('auth.storage_prefix', 'user_token');
         $this->redis = $container->get(\Redis::class);
         $this->event = $container->get(EventDispatcherInterface::class);
     }
 
-    private function getTokenInfo($token)
+    private function storageToken($token)
     {
-        [$hashKey,$hashListKey,$raw] = $this->tokenAnalysis($token);
-        $raw_token = $this->redis->hGet($hashListKey,$hashKey);
+        $key = $this->getTokenKey($token);
+        $raw_token = $this->redis->get($key);
         if (empty($raw_token)) {
             return [];
         }
-        return json_decode($raw_token, true);
+        $raw_token = json_decode($raw_token, true);
+        return [$key,$raw_token];
     }
 
     public function refresh($token)
     {
-        [$hashKey,$hashListKey,$raw] = $this->tokenAnalysis($token);
-        if ($raw['refresh_expire'] > Carbon::now()->getTimestamp()) {
-            if ($raw['expire'] - Carbon::now()->getTimestamp() < $this->surplus) {
-                $raw['expire'] = Carbon::now()->addSeconds($this->renewal)->getTimestamp();
-                $this->redis->hSet($hashListKey, $hashKey, json_encode($raw));
-                $this->event->dispatch(new TokenRefresh($token, time()));
+        $time = time();
+        [$tokenKey,$token_info] = $this->storageToken($token);
+        if($token_info['refresh_expire'] >$time){
+            if($token_info['expire'] - $time < $this->surplus){
+                $ttl = $this->redis->ttl($tokenKey);
+                $renewal = $ttl + $this->renewal;
+                $this->redis->expire($tokenKey,$renewal);
+                $this->event->dispatch(new TokenRefresh($token,$renewal));
             }
-        } else {
-            $this->delete($token);
         }
     }
 
     public function delete($token)
     {
-        [$hashKey,$hashListKey,$raw] = $this->tokenAnalysis($token);
-        $token_info = $this->redis->hGet($hashListKey, $hashKey);
-        $token_info = json_decode($token_info, true);
-        if ($token_info['token'] == $token) {
-            $this->redis->hDel($hashListKey, $hashKey);
-        }
+        $key = $this->getTokenKey($token);
+        $this->redis->del($key);
     }
 
     public function verify($token): array
     {
-        $raw_token = $this->getTokenInfo($token);
+        [$key,$raw_token] = $this->storageToken($token);
         if (empty($raw_token)) {
             return [];
         }
@@ -92,68 +89,47 @@ class StorageRedis
         return $raw_token;
     }
 
-    private function tokenNumber(string $guard, int $uid)
-    {
-        $this->userAllToken($guard, $uid);
-        return Context::get('TokenNum');
-    }
-
     public function formatToken($token)
     {
         $token = explode('.', $token);
         $raw_data = json_decode(base64_decode($token[0]), true);
         $sign = $token[1] ?? '';
         $raw_data['sign'] = $sign;
-        Context::set('format_token', $raw_data);
         return $raw_data;
     }
 
-    public function userAllToken($guard, $id)
+
+    private function tokenNum($guard, $uid)
     {
         $it = null;
-        $arr = [];
+        $keys = $this->userPrefix($guard, $uid);
         $num = 0;
-        while ($key_arr = $this->redis->hScan($this->redisHashListKey($guard), $it, $id . '-*',$this->max_login_num)) {
-            foreach ($key_arr as $key => $value) {
-                $arr[$key] = json_decode($value, true);
+        $tokens = [];
+        while ($arr = $this->redis->scan($it, $keys . '*', $this->max_login_num + 1)) {
+            foreach ($arr as $key => $value) {
+                $tokens[$key] = $value;
                 $num++;
             }
         }
-        Context::set('tokens', $arr);
-        Context::set('TokenNum', $num);
-        return $arr;
-    }
-
-    private function getOldToken(string $guard, int $uid)
-    {
-        $delKeys = [];
-        $tokens = $this->userAllToken($guard, $uid);
-        $number = count($tokens);
-        $surplusToken = $number - $this->max_login_num;
-
-        if ($surplusToken > 0) {
-            $tokens_key = array_values($tokens);
-            //return $tokens_key[$number]['token'];
-            for ($i = 0; $i < $surplusToken; $i++) {
-                $delKeys[] = $tokens_key[$i]['token'];
-            }
-        }
-        return $delKeys;
+        var_dump($num);
+        return [$num, $tokens];
     }
 
     private function delSurplusToken($guard, $uid)
     {
-        $tokens = $this->getOldToken($guard, $uid);
-        if(!empty($tokens)){
-            foreach ($tokens as $token) {
-                $this->delete($token);
-            }
+        [$num, $tokens] = $this->tokenNum($guard, $uid);
+        if ($num >= $this->max_login_num) {
+            $token_list = array_values($tokens);
+            $index = random_int(0, $num - 1);
+            $this->redis->del($token_list[$index]);
         }
+
     }
+
 
     public function generate(string $guard, int $uid)
     {
-        $this->deleteExpireToken($guard, $uid);
+        $this->delSurplusToken($guard, $uid);
         $raw_user_data = [
             'guard' => $guard,
             'uid' => $uid,
@@ -165,46 +141,15 @@ class StorageRedis
         $token_start = base64_encode(json_encode($raw_user_data));
         $token_sign = $this->tokenSign($token_start);
         $token = $token_start . '.' . $token_sign;
-        Context::set('raw_user_data', $raw_user_data);
-        Context::set('token', $token);
-        $this->save();
+        $this->save($raw_user_data, $token);
         $this->event->dispatch(new TokenCreate($token, $uid, $guard));
         return $token;
     }
 
-
-    private function deleteExpireToken($guard, $uid)
+    private function save($raw_user_data, $token)
     {
-        $hashListKey = $this->config->get('auth.hash_list_key');
-        $it = null;
-        while ($arr = $this->redis->hScan($hashListKey, $it, $uid . '-*',$this->max_login_num)) {
-            foreach ($arr as $key => $value) {
-                $token_info = json_decode($value, true);
-                if ($token_info['expire'] < time()) {
-                    $this->redis->hDel($hashListKey, $key);
-                }
-            }
-        }
-    }
-
-    private function save()
-    {
-        $raw_data = Context::get('raw_user_data');
-        $token = Context::get('token');
-        $raw_data['token'] = $token;
-        [$hashKey,$hashListKey,$raw] = $this->tokenAnalysis($token);
-        $this->redis->hSet($hashListKey,$hashKey, json_encode($raw_data));
-    }
-
-    private function hashKey($token)
-    {
-        $origin = Context::get('format_token') ?? $this->formatToken($token);
-        return (string)$origin['uid'] . '-' . $origin['sign'];
-    }
-
-    private function redisHashListKey($guard): string
-    {
-        return (string)$this->hash_list_key . $guard;
+        $raw_user_data['token'] = $token;
+        $this->redis->setex($this->getTokenKey($token), $this->expire, json_encode($raw_user_data));
     }
 
     private function tokenSign($origin_token)
@@ -212,11 +157,16 @@ class StorageRedis
         return md5($origin_token . $this->key);
     }
 
-    private function tokenAnalysis($token){
-        $origin = Context::get('format_token') ?? $this->formatToken($token);
-        $hashKey = (string)$origin['uid'] . '-' . $origin['sign'];
-        $hashListKey = $this->hash_list_key . $origin['guard'];
-        $token_raw = $origin;
-        return compact('hashKey','hashListKey','token_raw');
+    private function getTokenKey($token)
+    {
+        $token_info = $this->formatToken($token);
+
+        return $this->storage_prefix . $token_info['guard'] . $token_info['uid'] . '_' . $token_info['sign'];
     }
+
+    private function userPrefix($guard, $uid)
+    {
+        return $this->storage_prefix . $guard . $uid . '_';
+    }
+
 }
