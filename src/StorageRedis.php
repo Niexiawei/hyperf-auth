@@ -160,8 +160,10 @@ class StorageRedis
     private function getTokenKey($token)
     {
         $token_info = $this->formatToken($token);
-
-        return $this->storage_prefix . $token_info['guard'] . $token_info['uid'] . '_' . $token_info['sign'];
+        $guard = $token_info['guard'] ?? '';
+        $uid = $token_info['uid'] ?? '';
+        $sign = $token_info['sign'] ?? 0;
+        return $this->storage_prefix . $guard . $uid . '_' .$sign;
     }
 
     private function userPrefix($guard, $uid)
