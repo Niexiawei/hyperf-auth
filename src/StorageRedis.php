@@ -111,7 +111,6 @@ class StorageRedis
                 $num++;
             }
         }
-        var_dump($num);
         return [$num, $tokens];
     }
 
