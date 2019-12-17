@@ -120,7 +120,12 @@ class StorageRedis
         if ($num >= $this->max_login_num) {
             $token_list = array_values($tokens);
             $index = random_int(0, $num - 1);
-            $this->redis->del($token_list[$index]);
+            if(!isset($token_list[$index])){
+                $key = $token_list[$index - 1];
+            }else{
+                $key = $token_list[$index];
+            }
+            $this->redis->del($key);
         }
 
     }
