@@ -8,9 +8,7 @@ use Hyperf\Di\Annotation\Aspect;
 use Hyperf\Di\Aop\AbstractAspect;
 use Hyperf\Di\Aop\ProceedingJoinPoint;
 use Hyperf\HttpServer\Contract\ResponseInterface;
-use Hyperf\Utils\Context;
 use Niexiawei\Auth\AuthInterface;
-use Niexiawei\Auth\IsAuthInterface;
 use Psr\Container\ContainerInterface;
 
 /**

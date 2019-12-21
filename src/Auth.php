@@ -9,7 +9,7 @@ use Hyperf\HttpServer\Contract\RequestInterface;
 use Hyperf\Utils\Context;
 use Niexiawei\Auth\Exception\AuthModelNothingnessException;
 
-class Auth
+class Auth implements AuthInterface
 {
     private $container;
     private $request;
