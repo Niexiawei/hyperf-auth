@@ -19,7 +19,7 @@ class ConfigProvider
         return [
             'dependencies' => [
                 AuthInterface::class => Auth::class,
-                StorageRedisInterface::class => StorageRedis::class
+                StorageInterface::class => StorageRedis::class
             ],
             'commands' => [
             ],
