@@ -20,7 +20,7 @@ class Auth implements AuthInterface
         $this->container = $container;
         $this->request = $container->get(RequestInterface::class);
         $this->config = $container->get(ConfigInterface::class);
-        $this->storage = $container->get(StorageRedisInterface::class);
+        $this->storage = $container->get(StorageInterface::class);
     }
     public function login(string $guard,object $user){
         return $this->storage->generate($guard,$user->id);
