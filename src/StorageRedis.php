@@ -120,10 +120,9 @@ class StorageRedis implements StorageInterface
                 $this->delSurplusToken($guard,$uid);
             }else{
                 $key = $token_list[$index];
+                $this->redis->del($key);
             }
-            $this->redis->del($key);
         }
-
     }
 
     public function generate(string $guard, int $uid)
