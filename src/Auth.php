@@ -15,6 +15,7 @@ class Auth implements AuthInterface
     private $request;
     private $config;
     private $storage;
+
     public function __construct(Container $container)
     {
         $this->container = $container;
@@ -22,49 +23,55 @@ class Auth implements AuthInterface
         $this->config = $container->get(ConfigInterface::class);
         $this->storage = $container->get(StorageInterface::class);
     }
-    public function login(string $guard,object $user){
-        return $this->storage->generate($guard,$user->id);
+
+    public function login(string $guard, object $user)
+    {
+        return $this->storage->generate($guard, $user->id);
     }
 
-    public function guard(){
-        if($this->check()){
+    public function guard()
+    {
+        if ($this->check()) {
             return Context::get('user_info')['guard'];
         }
         return '';
     }
 
-    public function check(){
+    public function check()
+    {
         $token = $this->getToken();
-        if(empty($token)){
+        if (empty($token)) {
             return false;
         }
         $user_info = $this->storage->verify($token);
-        if(empty($user_info)){
+        if (empty($user_info)) {
             return false;
         }
-        Context::set('user_info',$user_info);
+        Context::set('user_info', $user_info);
         return true;
     }
 
-    public function id(){
-        if($this->check()){
+    public function id()
+    {
+        if ($this->check()) {
             return Context::get('user_info')['uid'];
         }
         return 0;
     }
 
-    public function logout():bool
+    public function logout(): bool
     {
-        if(!$this->check()){
-            return  false;
+        if (!$this->check()) {
+            return false;
         }
         $this->storage->delete($this->getToken());
         return true;
     }
 
-    public function user(){
+    public function user()
+    {
         $id = $this->id();
-        if($id > 0){
+        if ($id > 0) {
             $guard = $this->formatToken()['guard'];
             return $this->getModel($guard)->find($id);
         }
@@ -73,38 +80,38 @@ class Auth implements AuthInterface
 
     private function getModel($guard): object
     {
-        try{
-            $model = $this->config->get('auth.guards.' . $guard . '.model');
-            return new $model;
-        }catch (\Exception $exception){
-            throw new AuthModelNothingnessException('用户模型不存在');
+        $model = $this->config->get('auth.guards.' . $guard . '.model');
+        if(!class_exists($model)){
+            throw new AuthModelNothingnessException('用户模型不存在'.$model);
         }
+        return new $model;
 
     }
 
-    public function formatToken(){
+    public function formatToken()
+    {
         return $this->storage->formatToken($this->getToken());
     }
 
     public function getToken()
     {
-        if(!empty(Context::get('token'))){
+        if (!empty(Context::get('token'))) {
             return Context::get('token');
         }
         if ($this->request->has('token')) {
-            $token =  $this->request->input('token');
+            $token = $this->request->input('token');
         } elseif ($this->request->hasHeader('token')) {
             $token = $this->request->header('token');
         } else {
             $token = '';
         }
-        Context::set('token',$token);
+        Context::set('token', $token);
         return $token;
     }
 
-    public function setToken($token):Auth
+    public function setToken($token): Auth
     {
-        Context::set('token',$token);
+        Context::set('token', $token);
         return $this;
     }
 }
