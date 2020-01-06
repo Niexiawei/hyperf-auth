@@ -128,11 +128,12 @@ class StorageRedis implements StorageInterface
 
     private function delSurplusToken($guard, $uid)
     {
+        $max_login = $this->max_login_num - 1;
         [$num, $tokens] = $this->tokenNum($guard, $uid);
-        if ($num >= $this->max_login_num) {
+        if ($num >= $max_login) {
             $token_list = array_values($tokens);
             foreach ($token_list as $index => $token) {
-                if ($index + 1 > $this->max_login_num) {
+                if ($index + 1 > $max_login) {
                     $this->redis->del($token);
                 }
             }
