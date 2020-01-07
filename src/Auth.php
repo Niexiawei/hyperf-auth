@@ -14,19 +14,36 @@ class Auth implements AuthInterface
     private $container;
     private $request;
     private $config;
-    private $storage;
 
     public function __construct(Container $container)
     {
         $this->container = $container;
         $this->request = $container->get(RequestInterface::class);
         $this->config = $container->get(ConfigInterface::class);
-        $this->storage = $container->get(StorageInterface::class);
+    }
+    public function getStorage():StorageInterface
+    {
+        return make(StorageRedis::class);
     }
 
     public function login(string $guard, object $user)
     {
-        return $this->storage->generate($guard, $user->id);
+        return $this->getStorage()->generate($guard, $user->id);
+    }
+    
+    public function setAllowRefreshToken(bool $allow = true):Auth
+    {
+        Context::set(AllowRefreshOrNotInterface::class,$allow);   
+        return $this;
+    }
+    
+    public function setTTL(int $second):Auth
+    {
+        if($second <= 10){
+            throw new \Exception('token时间必须大于10秒');
+        }
+        $res = Context::set(setTokenExpireInterface::class,$second);
+        return $this;
     }
 
     public function guard()
@@ -43,7 +60,7 @@ class Auth implements AuthInterface
         if (empty($token)) {
             return false;
         }
-        $user_info = $this->storage->verify($token);
+        $user_info = $this->getStorage()->verify($token);
         if (empty($user_info)) {
             return false;
         }
@@ -64,7 +81,7 @@ class Auth implements AuthInterface
         if (!$this->check()) {
             return false;
         }
-        $this->storage->delete($this->getToken());
+        $this->getStorage()->delete($this->getToken());
         return true;
     }
 
@@ -90,7 +107,7 @@ class Auth implements AuthInterface
 
     public function formatToken()
     {
-        return $this->storage->formatToken($this->getToken());
+        return $this->getStorage()->formatToken($this->getToken());
     }
 
     public function getToken()

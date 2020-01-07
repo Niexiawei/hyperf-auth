@@ -8,11 +8,7 @@ use Carbon\Carbon;
 use Hyperf\Contract\ConfigInterface;
 use Hyperf\Utils\Context;
 use Hyperf\Utils\Str;
-use Niexiawei\Auth\Event\TokenCreate;
-use Niexiawei\Auth\Event\TokenRefresh;
 use Psr\Container\ContainerInterface;
-use Psr\EventDispatcher\EventDispatcherInterface;
-use Swoole\Exception;
 
 class StorageRedis implements StorageInterface
 {
@@ -22,19 +18,29 @@ class StorageRedis implements StorageInterface
     protected $max_login_num;
     protected $storage_prefix;
     protected $redis;
-    protected $event;
     protected $max_login_time;
 
     public function __construct(ContainerInterface $container)
     {
         $this->config = $config = $container->get(ConfigInterface::class);
-        $this->expire = $config->get('auth.expire', 3600 * 24);
         $this->key = $config->get('auth.key');
         $this->max_login_num = $config->get('auth.max_login_num', 7);
         $this->storage_prefix = $config->get('auth.storage_prefix', 'user_token');
-        $this->max_login_time = $config->get('auth.max_login_time', 3600 * 24 * 30);
         $this->redis = $container->get(\Redis::class);
-        $this->event = $container->get(EventDispatcherInterface::class);
+        $this->max_login_time = $config->get('auth.max_login_time', 3600 * 24 * 30);
+    }
+
+    private function getAllowRefreshToken(): bool
+    {
+        $allow = Context::get(AllowRefreshOrNotInterface::class,true);
+        return  $allow;
+    }
+
+    private function getTTL()
+    {
+        $config = $this->config->get('auth.expire', 3600 * 24);
+        $second = Context::get(setTokenExpireInterface::class,$config);
+        return $second;
     }
 
     public function verify($token): array
@@ -58,8 +64,8 @@ class StorageRedis implements StorageInterface
     {
         $key = $this->getTokenKey($token);
         $raw_token = $this->redis->get($key);
-        if(empty($raw_token)){
-            throw new Exception('token不存在');
+        if (empty($raw_token)) {
+            throw new \Exception('token不存在');
         }
         $raw_token = json_decode($raw_token, true);
         return [$key, $raw_token];
@@ -78,7 +84,7 @@ class StorageRedis implements StorageInterface
     {
         $raw_data = [];
         $token = explode('.', $token);
-        if(isset($token[0]) && isset($token[1])){
+        if (isset($token[0]) && isset($token[1])) {
             $raw_data = json_decode(base64_decode($token[0]), true);
             if (empty($raw_data)) {
                 $raw_data = [];
@@ -87,7 +93,7 @@ class StorageRedis implements StorageInterface
             $raw_data['sign'] = $sign;
             return $raw_data;
         }
-        throw new Exception('token格式错误，无法解析');
+        throw new \Exception('token格式错误，无法解析');
     }
 
     public function delete($token)
@@ -100,10 +106,12 @@ class StorageRedis implements StorageInterface
     {
         $time = time();
         [$key, $token] = $this->storageToken($token);
-        if ($time < $token['expire']) {
-            $ttl = $this->redis->ttl($key);
-            if ($ttl < 3600) {
-                $this->redis->expire($key, $ttl + 3600);
+        if (isset($token['allow_refresh_token']) && $token['allow_refresh_token'] == 1) {
+            if ($time < $token['expire']) {
+                $ttl = $this->redis->ttl($key);
+                if ($ttl < 3600) {
+                    $this->redis->expire($key, $ttl + 3600);
+                }
             }
         }
     }
@@ -116,24 +124,24 @@ class StorageRedis implements StorageInterface
             'uid' => $uid,
             'create_time' => Carbon::now()->getTimestamp(),
             'expire' => Carbon::now()->addSeconds($this->max_login_time)->getTimestamp(),
-            'random' => Str::random(20),
+            'random' => Str::random(32),
+            'allow_refresh_token' => $this->getAllowRefreshToken() ? 1 : 0
         ];
         $token_start = base64_encode(json_encode($raw_user_data));
         $token_sign = $this->tokenSign($token_start);
         $token = $token_start . '.' . $token_sign;
         $this->save($raw_user_data, $token);
-        $this->event->dispatch(new TokenCreate($token, $uid, $guard));
         return $token;
     }
 
     private function delSurplusToken($guard, $uid)
     {
-        $max_login = $this->max_login_num - 1;
+        $max_login = $this->max_login_num;
         [$num, $tokens] = $this->tokenNum($guard, $uid);
         if ($num >= $max_login) {
             $token_list = array_values($tokens);
-            foreach ($token_list as $index => $token) {
-                if ($index + 1 > $max_login) {
+            foreach ($token_list as $key => $token) {
+                if ($key + 1 >= $max_login) {
                     $this->redis->del($token);
                 }
             }
@@ -147,8 +155,8 @@ class StorageRedis implements StorageInterface
         $num = 0;
         $tokens = [];
         while ($arr = $this->redis->scan($it, $keys . '*', 20)) {
-            foreach ($arr as $key => $value) {
-                $tokens[$key] = $value;
+            foreach ($arr as $value) {
+                $tokens[] = $value;
                 $num++;
             }
         }
@@ -168,7 +176,7 @@ class StorageRedis implements StorageInterface
     private function save($raw_user_data, $token)
     {
         $raw_user_data['token'] = $token;
-        $this->redis->setex($this->getTokenKey($token), $this->expire, json_encode($raw_user_data));
+        $this->redis->setex($this->getTokenKey($token), $this->getTTL(), json_encode($raw_user_data));
     }
 
 }

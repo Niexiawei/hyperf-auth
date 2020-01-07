@@ -35,30 +35,11 @@ class AopAuth extends AbstractAspect
 
     public function process(ProceedingJoinPoint $proceedingJoinPoint)
     {
-//        $is_auth = true;
-//        $methodAnnotation = $proceedingJoinPoint->getAnnotationMetadata()->method;
-//        $classAnnotation = $proceedingJoinPoint->getAnnotationMetadata()->class;
-//        if(empty($methodAnnotation)){
-//            $is_auth = $classAnnotation[Auth::class]->is_auth;
-//        }else{
-//            $is_auth = $methodAnnotation[Auth::class]->is_auth;
-//        }
-//        if($is_auth === true){
-//            if($this->auth->check()){
-//                return $proceedingJoinPoint->process();
-//            }else{
-//                return $this->response->json(['code'=>401,'msg'=>'你还未登录']);
-//            }
-//        }else{
-//            Context::set(IsAuthInterface::class,false);
-//            return $proceedingJoinPoint->process();
-//        }
         if($this->auth->check()){
             return $proceedingJoinPoint->process();
         }else{
             return $this->response->json(['code'=>401,'msg'=>'你还未登录']);
         }
-
     }
 
 }

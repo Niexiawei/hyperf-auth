@@ -14,5 +14,7 @@ interface AuthInterface
     public function formatToken();
     public function getToken();
     public function setToken($token):Auth;
+    public function setTTL(int $second):Auth;
+    public function setAllowRefreshToken(bool $allow = true):Auth;
     public function guard();
 }
