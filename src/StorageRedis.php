@@ -155,7 +155,6 @@ class StorageRedis implements StorageInterface
                 $token_list[array_pop($format)] = $token;
             }
             ksort($token_list);
-            var_dump($token_list);
             $this->redis->del(array_slice($token_list,0,$delNum));
         }
     }
