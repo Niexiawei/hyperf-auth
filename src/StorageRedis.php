@@ -6,6 +6,7 @@ namespace Niexiawei\Auth;
 
 use Carbon\Carbon;
 use Hyperf\Contract\ConfigInterface;
+use Hyperf\Redis\RedisFactory;
 use Hyperf\Utils\Context;
 use Hyperf\Utils\Str;
 use Psr\Container\ContainerInterface;
@@ -26,9 +27,16 @@ class StorageRedis implements StorageInterface
         $this->key = $config->get('auth.key');
         $this->max_login_num = $config->get('auth.max_login_num', 7);
         $this->storage_prefix = $config->get('auth.storage_prefix', 'user_token');
-        $this->redis = $container->get(\Redis::class);
+        $this->redis = $this->redis($container);
         $this->max_login_time = $config->get('auth.max_login_time', 3600 * 24 * 30);
     }
+
+    protected function redis(ContainerInterface $container){
+        $redis = $container->get(RedisFactory::class)->get('default');
+        $redis->setOption(\Redis::OPT_SCAN,\Redis::SCAN_RETRY);
+        return $redis;
+    }
+
 
     private function getAllowRefreshToken(): bool
     {
@@ -77,7 +85,7 @@ class StorageRedis implements StorageInterface
         $guard = $token_info['guard'] ?? '';
         $uid = $token_info['uid'] ?? '';
         $sign = $token_info['sign'] ?? 0;
-        return $this->storage_prefix . $guard . $uid . '_' . $sign;
+        return $this->storage_prefix . $guard . $uid . '_' . $sign.'_'.time();
     }
 
     public function formatToken($token)
@@ -118,7 +126,6 @@ class StorageRedis implements StorageInterface
 
     public function generate(string $guard, int $uid)
     {
-        $this->delSurplusToken($guard, $uid);
         $raw_user_data = [
             'guard' => $guard,
             'uid' => $uid,
@@ -131,20 +138,24 @@ class StorageRedis implements StorageInterface
         $token_sign = $this->tokenSign($token_start);
         $token = $token_start . '.' . $token_sign;
         $this->save($raw_user_data, $token);
+        $this->delSurplusToken($guard, $uid);
         return $token;
     }
 
     private function delSurplusToken($guard, $uid)
     {
+        $token_list = [];
         $max_login = $this->max_login_num;
         [$num, $tokens] = $this->tokenNum($guard, $uid);
-        if ($num >= $max_login) {
-            $token_list = array_values($tokens);
-            foreach ($token_list as $key => $token) {
-                if ($key + 1 >= $max_login) {
-                    $this->redis->del($token);
-                }
+        if ($num > $max_login) {
+            $delNum = $num - $max_login;
+            foreach ($tokens as $token){
+                $format = explode('_',$token);
+                $token_list[array_pop($format)] = $token;
             }
+            ksort($token_list);
+            var_dump($token_list);
+            $this->redis->del(array_slice($token_list,0,$delNum));
         }
     }
 
@@ -155,11 +166,11 @@ class StorageRedis implements StorageInterface
         $num = 0;
         $tokens = [];
         while ($arr = $this->redis->scan($it, $keys . '*', 20)) {
-            foreach ($arr as $value) {
+            foreach ($arr as $key => $value) {
                 $tokens[] = $value;
-                $num++;
             }
         }
+        $num = count($tokens);
         return [$num, $tokens];
     }
 
