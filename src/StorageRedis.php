@@ -82,10 +82,11 @@ class StorageRedis implements StorageInterface
     private function getTokenKey($token)
     {
         $token_info = $this->formatToken($token);
-        $guard = $token_info['guard'] ?? '';
-        $uid = $token_info['uid'] ?? '';
+        $guard = $token_info['guard'] ?? 'null';
+        $uid = $token_info['uid'] ?? -1;
         $sign = $token_info['sign'] ?? 0;
-        return $this->storage_prefix . $guard . $uid . '_' . $sign.'_'.time();
+        $create_time = $token_info['create_time'] ?? 0;
+        return $this->storage_prefix . $guard . $uid . '_' . $sign.'_'.$create_time;
     }
 
     public function formatToken($token)
