@@ -20,20 +20,28 @@ class StorageRedis implements StorageInterface
     protected $storage_prefix;
     protected $redis;
     protected $max_login_time;
+    protected $container;
 
     public function __construct(ContainerInterface $container)
     {
-        $this->config = $config = $container->get(ConfigInterface::class);
+        $this->container = $container;
+        $this->setConfig();
+        $this->redis = $this->redis($container);
+
+    }
+
+    protected function setConfig(){
+        $this->config = $config = $this->container->get(ConfigInterface::class);
         $this->key = $config->get('auth.key');
         $this->max_login_num = $config->get('auth.max_login_num', 7);
         $this->storage_prefix = $config->get('auth.storage_prefix', 'user_token');
-        $this->redis = $this->redis($container);
         $this->max_login_time = $config->get('auth.max_login_time', 3600 * 24 * 30);
     }
 
     protected function redis(ContainerInterface $container){
-        $redis = $container->get(RedisFactory::class)->get('default');
-        $redis->setOption(\Redis::OPT_SCAN,\Redis::SCAN_RETRY);
+        $pool = $this->config->get('auth.redis_pool','default');
+        $redis = $container->get(RedisFactory::class)->get($pool);
+        $redis->setOption(\Redis::OPT_SCAN,(string)\Redis::SCAN_RETRY);
         return $redis;
     }
 
@@ -119,7 +127,7 @@ class StorageRedis implements StorageInterface
             if ($time < $token['expire']) {
                 $ttl = $this->redis->ttl($key);
                 if ($ttl < 3600) {
-                    $this->redis->expire($key, $ttl + 3600);
+                    $this->redis->expire($key, $this->getTTL());
                 }
             }
         }
