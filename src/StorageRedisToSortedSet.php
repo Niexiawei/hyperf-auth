@@ -62,7 +62,7 @@ class StorageRedisToSortedSet implements StorageInterface
     }
     protected function getUidTokens(string $token){
         $tokens = [];
-        $now = time();
+        $now = Carbon::now()->getTimestamp();
         $origin = $this->unFormat($token);
         $search = $origin['guard'].'_'.$origin['uid'].'_*';
         $it = null;
@@ -76,19 +76,17 @@ class StorageRedisToSortedSet implements StorageInterface
                 if($now > $expire){
                     $del_token[] = $token_key;
                 }else{
-                    $tokens = ['token_key'=>$token_key,'expire'=>$expire];
+                    $tokens[] = ['token_key'=>$token_key,'expire'=>$expire];
                 }
             }
         }
-        $this->delToken($del_token);
+        if(!empty($del_token)){
+            $this->delToken(implode(',',$del_token));
+        }
         return $tokens;
     }
-    private function delToken(string ...$tokens){
-        $keys = [];
-        foreach ($tokens as $token){
-            $keys = $this->tokenKey($token);
-        }
-        $this->redis()->zRem($this->user_token_list,$keys);
+    private function delToken($token){
+        $this->redis()->zRem($this->user_token_list,$token);
     }
     public function generate(string $guard, int $uid)
     {
@@ -110,13 +108,19 @@ class StorageRedisToSortedSet implements StorageInterface
         return $token_head.'.'.$token_sign;
     }
     private function unFormat(string $token){
-        $origin = explode('.',$token);
-        if(isset($origin[0]) && isset($origin[1])){
-            $token_head = $origin[0];
-            $token_sign = $origin[1];
-            $origin_token = json_decode(base64_decode($token_head),true);
-            $origin_token['sign'] = $token_sign;
-            return $token_sign;
+        $origin = $this->tokenToOrigin($token);
+        if(!empty($origin)){
+            return $origin;
+        }else{
+            $origin = explode('.',$token);
+            if(isset($origin[0]) && isset($origin[1])){
+                $token_head = $origin[0];
+                $token_sign = $origin[1];
+                $origin_token = json_decode(base64_decode($token_head),true);
+                $origin_token['sign'] = $token_sign;
+                $this->tokenToOriginCache($token,$origin_token);
+                return $origin_token;
+            }
         }
         throw new Exception('Token无法解析');
     }
@@ -125,9 +129,9 @@ class StorageRedisToSortedSet implements StorageInterface
         $allow = Context::get(AllowRefreshOrNotInterface::class,true);
         return  $allow;
     }
-    public function delete($token)
-    {
-        $this->delToken($token);
+    public function delete($token){
+        $keys = $this->tokenKey($token);
+        $this->redis()->zRem($this->user_token_list,$keys);
     }
     private function getTTL()
     {
@@ -139,7 +143,7 @@ class StorageRedisToSortedSet implements StorageInterface
     {
         $tokens = $this->getUidTokens($token);
         $num = count($tokens);
-        $max_num = $this->config('max_login_num',7);
+        $max_num = $this->config('max_login_num',7) - 1;
         if($num > $max_num){
             $delNum = $num - $max_num;
             array_multisort(array_column($tokens,'expire'),SORT_ASC,$tokens);
@@ -147,7 +151,12 @@ class StorageRedisToSortedSet implements StorageInterface
             $del_token_arr = array_map(function ($tokens){
                 return $tokens['token_key'];
             },$delTokens);
-            $this->delToken($del_token_arr);
+            if(!empty($del_token_arr)){
+                var_dump($del_token_arr);
+                foreach ($del_token_arr as $token){
+                    $this->delToken($token);
+                }
+            }
         }
     }
     public function refresh($token)
@@ -174,5 +183,15 @@ class StorageRedisToSortedSet implements StorageInterface
     public function formatToken($token)
     {
         return $this->unFormat($token);
+    }
+
+    private function tokenToOriginCache($token,$orgin){
+        $token_cache = Context::get('tokens_cache',[]);
+        Context::set('tokens_cache',array_merge($token_cache,[$token=>$orgin]));
+    }
+
+    private function tokenToOrigin($token){
+        $token_cache = Context::get('tokens_cache',[]);
+        return $token_cache[$token] ?? [];
     }
 }
