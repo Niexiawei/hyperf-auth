@@ -8,6 +8,7 @@ use Hyperf\Di\Container;
 use Hyperf\HttpServer\Contract\RequestInterface;
 use Hyperf\Utils\Context;
 use Niexiawei\Auth\Exception\AuthModelNothingnessException;
+use Swoole\Exception;
 
 class Auth implements AuthInterface
 {
@@ -21,28 +22,40 @@ class Auth implements AuthInterface
         $this->request = $container->get(RequestInterface::class);
         $this->config = $container->get(ConfigInterface::class);
     }
-    public function getStorage():StorageInterface
+
+    public function getStorage(): StorageInterface
     {
-        return make(StorageRedis::class);
+        $drive = $this->config->get('auth.drive','kv');
+        switch ($drive) {
+            case 'kv':
+                return make(StorageRedis::class);
+                break;
+            case 'sort_set':
+                return make(StorageRedisToSortedSet::class);
+                break;
+            default:
+                throw new Exception('驱动不存在');
+                break;
+        }
     }
 
     public function login(string $guard, object $user)
     {
         return $this->getStorage()->generate($guard, $user->id);
     }
-    
-    public function setAllowRefreshToken(bool $allow = true):Auth
+
+    public function setAllowRefreshToken(bool $allow = true): Auth
     {
-        Context::set(AllowRefreshOrNotInterface::class,$allow);   
+        Context::set(AllowRefreshOrNotInterface::class, $allow);
         return $this;
     }
-    
-    public function setTTL(int $second):Auth
+
+    public function setTTL(int $second): Auth
     {
-        if($second <= 10){
+        if ($second <= 10) {
             throw new \Exception('token时间必须大于10秒');
         }
-        $res = Context::set(setTokenExpireInterface::class,$second);
+        $res = Context::set(setTokenExpireInterface::class, $second);
         return $this;
     }
 
@@ -98,8 +111,8 @@ class Auth implements AuthInterface
     private function getModel($guard): object
     {
         $model = $this->config->get('auth.guards.' . $guard . '.model');
-        if(!class_exists($model)){
-            throw new AuthModelNothingnessException('用户模型不存在'.$model);
+        if (!class_exists($model)) {
+            throw new AuthModelNothingnessException('用户模型不存在' . $model);
         }
         return new $model;
 

@@ -40,11 +40,8 @@ class StorageRedis implements StorageInterface
 
     protected function redis(ContainerInterface $container){
         $pool = $this->config->get('auth.redis_pool','default');
-        $redis = $container->get(RedisFactory::class)->get($pool);
-        $redis->setOption(\Redis::OPT_SCAN,(string)\Redis::SCAN_RETRY);
-        return $redis;
+        return $container->get(RedisFactory::class)->get($pool);
     }
-
 
     private function getAllowRefreshToken(): bool
     {
@@ -171,9 +168,12 @@ class StorageRedis implements StorageInterface
     {
         $it = null;
         $keys = $this->userPrefix($guard, $uid);
-        $num = 0;
         $tokens = [];
-        while ($arr = $this->redis->scan($it, $keys . '*', 20)) {
+        while (true) {
+            $arr = $this->redis->scan($it, $keys . '*', 20);
+            if($arr === false){
+                break;
+            }
             foreach ($arr as $key => $value) {
                 $tokens[] = $value;
             }
