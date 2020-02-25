@@ -78,6 +78,7 @@ class StorageRedisToSortedSet implements StorageInterface
     protected function tokenSave(string $token)
     {
         $this->delSurplusToken($token);
+        $this->handleExpireToken();
         $key = $this->tokenKey($token);
         $expire = $this->getTTL();
         $expire_timestamp = Carbon::now()->addSeconds($expire)->getTimestamp();
@@ -129,11 +130,7 @@ class StorageRedisToSortedSet implements StorageInterface
             }
         }
         if (!empty($del_expire_token)) {
-            $this->redis()->multi(\Redis::PIPELINE);
-            foreach ($del_expire_token as $token) {
-                $this->delToken($token);
-            }
-            $this->redis()->exec();
+            $this->delToken($del_expire_token);
         }
         return $tokens;
     }
@@ -142,10 +139,33 @@ class StorageRedisToSortedSet implements StorageInterface
      * @param $token
      * 根据token_key 删除token
      */
+    private function handleExpireToken(){
+        $it = null;
+        $now = Carbon::now()->getTimestamp();
+        $expire_token = [];
+        while (true){
+            $arr = $this->redis()->zScan($this->user_token_list,$it,'*');
+            if($arr === false){
+                break;
+            }
+            foreach ($arr as $token_key => $expire){
+                if($expire < $now){
+                    $expire_token[] = $token_key;
+                }
+            }
+        }
+        if(!empty($expire_token)){
+            $this->delToken($expire_token);
+        }
+    }
 
-    private function delToken($token)
+    private function delToken(array $tokens)
     {
-        $this->redis()->zRem($this->user_token_list, $token);
+        $pip = $this->redis()->multi(\Redis::PIPELINE);
+        foreach ($tokens as $token){
+            $pip->zRem($this->user_token_list, $token);
+        }
+        $pip->exec();
     }
 
 
@@ -266,16 +286,10 @@ class StorageRedisToSortedSet implements StorageInterface
                 return $tokens['token_key'];
             }, $delTokens);
             if (!empty($del_token_arr)) {
-                $this->redis()->multi(\Redis::PIPELINE);
-                foreach ($del_token_arr as $token) {
-                    $this->delToken($token);
-                }
-                $this->redis()->exec();
+                $this->delToken($del_token_arr);
             }
         }
     }
-
-
     /**
      * @param $token
      * @throws Exception
@@ -283,14 +297,16 @@ class StorageRedisToSortedSet implements StorageInterface
      */
     public function refresh($token)
     {
+        $now = Carbon::now()->getTimestamp();
         $origin = $this->unFormat($token);
         $expire_timestamp = $this->tokenExists($token);
         $token_key = $this->tokenKey($token);
         $create_time = Carbon::createFromTimestamp($origin['create_time']);
         $expire_time = Carbon::createFromTimestamp($expire_timestamp);
         $max_login_time = $this->config('max_login_time', 3600 * 24);
-        if ($create_time->diffInSeconds($create_time) <= $max_login_time) {
-            $expire = $expire_time->addSeconds($this->getTTL())->getTimestamp();
+        $create_diff_expire = $expire_time->diffInSeconds($create_time);
+        if ($expire_timestamp > $now &&  $create_diff_expire <= $max_login_time) {
+            $expire = Carbon::now()->addSeconds($this->getTTL())->getTimestamp();
             $this->redis()->zAdd($this->user_token_list, [], $expire, $token_key);
         }
     }
@@ -301,7 +317,6 @@ class StorageRedisToSortedSet implements StorageInterface
      * @throws Exception
      * 验证token
      */
-
     public function verify($token): array
     {
         $this->getUidTokens($token);
