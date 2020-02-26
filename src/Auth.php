@@ -98,14 +98,18 @@ class Auth implements AuthInterface
         return true;
     }
 
-    public function user()
+    public function user():object
     {
         $id = $this->id();
         if ($id > 0) {
             $guard = $this->formatToken()['guard'];
-            return $this->getModel($guard)->find($id);
+            $model = $this->config->get('auth.guards.' . $guard . '.model');
+            $user =  $this->getModel($guard)->find($id);
+            if($user instanceof $model){
+                return $user;
+            }
         }
-        return [];
+        throw new \Exception('用户不存在');
     }
 
     private function getModel($guard): object
