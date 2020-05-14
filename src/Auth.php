@@ -25,7 +25,7 @@ class Auth implements AuthInterface
 
     public function getStorage(): StorageInterface
     {
-        $drive = $this->config->get('auth.drive','kv');
+        $drive = $this->config->get('auth.drive', 'kv');
         switch ($drive) {
             case 'kv':
                 return make(StorageRedis::class);
@@ -98,14 +98,19 @@ class Auth implements AuthInterface
         return true;
     }
 
-    public function user():object
+    public function user(): object
     {
+        $user = Context::get(UserContextInterface::class, []);
+        if ($user) {
+            return $user;
+        }
         $id = $this->id();
         if ($id > 0) {
             $guard = $this->formatToken()['guard'];
             $model = $this->config->get('auth.guards.' . $guard . '.model');
-            $user =  $this->getModel($guard)->find($id);
-            if($user instanceof $model){
+            $user = $this->getModel($guard)->find($id);
+            if ($user instanceof $model) {
+                Context::set(UserContextInterface::class, $user);
                 return $user;
             }
         }
