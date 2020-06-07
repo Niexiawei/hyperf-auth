@@ -7,7 +7,9 @@ use Hyperf\Contract\ConfigInterface;
 use Hyperf\Di\Container;
 use Hyperf\HttpServer\Contract\RequestInterface;
 use Hyperf\Utils\Context;
+use Niexiawei\Auth\Drive\RedisDrive;
 use Niexiawei\Auth\Exception\AuthModelNothingnessException;
+use Niexiawei\Auth\Exception\NotInheritedInterfaceException;
 use Swoole\Exception;
 
 class Auth implements AuthInterface
@@ -23,20 +25,9 @@ class Auth implements AuthInterface
         $this->config = $container->get(ConfigInterface::class);
     }
 
-    public function getStorage(): StorageInterface
+    public function getStorage(): DriveInterface
     {
-        $drive = $this->config->get('auth.drive', 'kv');
-        switch ($drive) {
-            case 'kv':
-                return make(StorageRedis::class);
-                break;
-            case 'sort_set':
-                return make(StorageRedisToSortedSet::class);
-                break;
-            default:
-                throw new Exception('驱动不存在');
-                break;
-        }
+        return make(RedisDrive::class);
     }
 
     public function login(string $guard, object $user)
@@ -62,7 +53,7 @@ class Auth implements AuthInterface
     public function guard()
     {
         if ($this->check()) {
-            return Context::get('user_info')['guard'];
+            return $this->getUserInfo()->guard;
         }
         return '';
     }
@@ -74,17 +65,14 @@ class Auth implements AuthInterface
             return false;
         }
         $user_info = $this->getStorage()->verify($token);
-        if (empty($user_info)) {
-            return false;
-        }
-        Context::set('user_info', $user_info);
+        $this->setUserInfo($user_info);
         return true;
     }
 
     public function id()
     {
         if ($this->check()) {
-            return Context::get('user_info')['uid'];
+            return $this->getUserInfo()->user_id;
         }
         return 0;
     }
@@ -104,32 +92,42 @@ class Auth implements AuthInterface
         if ($user) {
             return $user;
         }
-        $id = $this->id();
-        if ($id > 0) {
-            $guard = $this->formatToken()['guard'];
-            $model = $this->config->get('auth.guards.' . $guard . '.model');
-            $user = $this->getModel($guard)->find($id);
-            if ($user instanceof $model) {
-                Context::set(UserContextInterface::class, $user);
-                return $user;
+        if ($this->check()) {
+            if ($this->getUserInfo()->user_id) {
+                $guard = $this->getUserInfo()->guard;
+                $model = $this->config->get('auth.guards.' . $guard . '.model');
+                $user = $this->getModel($guard)->authFind($this->getUserInfo()->user_id);
+                if ($user instanceof $model) {
+                    Context::set(UserContextInterface::class, $user);
+                    return $user;
+                }
             }
         }
         throw new \Exception('用户不存在');
     }
 
-    private function getModel($guard): object
+    private function getModel($guard): AuthUserInterface
     {
         $model = $this->config->get('auth.guards.' . $guard . '.model');
         if (!class_exists($model)) {
             throw new AuthModelNothingnessException('用户模型不存在' . $model);
         }
-        return new $model;
-
+        $userModel =  new $model;
+        if ($userModel instanceof AuthUserInterface){
+            return $userModel;
+        }
+        throw new NotInheritedInterfaceException('不是AuthUserInterface的实现');
     }
 
-    public function formatToken()
+
+    public function setUserInfo(AuthUserObj $userObj)
     {
-        return $this->getStorage()->formatToken($this->getToken());
+        Context::set('auth.user_info', $userObj);
+    }
+
+    public function getUserInfo(): ?AuthUserObj
+    {
+        return Context::get('auth.user_info');
     }
 
     public function getToken()
@@ -152,5 +150,10 @@ class Auth implements AuthInterface
     {
         Context::set('token', $token);
         return $this;
+    }
+
+    public function formatToken()
+    {
+
     }
 }

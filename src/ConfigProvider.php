@@ -12,6 +12,9 @@ declare(strict_types=1);
 
 namespace Niexiawei\Auth;
 
+use Niexiawei\Auth\Command\GenerateAuthKeyCommand;
+use Niexiawei\Auth\Listener\AppBootListener;
+
 class ConfigProvider
 {
     public function __invoke(): array
@@ -21,6 +24,7 @@ class ConfigProvider
                 AuthInterface::class => Auth::class
             ],
             'commands' => [
+                GenerateAuthKeyCommand::class
             ],
             'annotations' => [
                 'scan' => [
@@ -29,7 +33,9 @@ class ConfigProvider
                     ],
                 ],
             ],
-            'listeners' => [],
+            'listeners' => [
+                AppBootListener::class
+            ],
             'publish' => [
                 [
                     'id' => 'config',
