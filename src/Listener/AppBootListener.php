@@ -3,6 +3,7 @@
 namespace Niexiawei\Auth\Listener;
 
 use Hyperf\Event\Contract\ListenerInterface;
+use Hyperf\Framework\Event\BeforeServerStart;
 use Hyperf\Framework\Event\BeforeWorkerStart;
 use Hyperf\Framework\Event\BootApplication;
 use Hyperf\Utils\ApplicationContext;
@@ -13,7 +14,7 @@ class AppBootListener implements ListenerInterface
     public function listen(): array
     {
         return [
-            BootApplication::class
+            BeforeServerStart::class
         ];
     }
 
