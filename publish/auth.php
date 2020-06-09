@@ -19,6 +19,5 @@ return [
     'max_login_num' => 7, // 最大登录客户端
     'storage_prefix'=>'user_token_',
     'max_login_time'=>3600 * 24 * 30,
-    'redis_pool'=>'default',
-    'drive'=>'kv'
+    'redis_pool'=>'default'
 ];
