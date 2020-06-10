@@ -34,13 +34,7 @@ class RedisDrive implements DriveInterface
      */
     protected $util;
 
-    public $user_token_list;
-
-    public function __construct()
-    {
-        $this->user_token_list = env('APP_NAME', 'hyperf') . '_user_token_list_redis_drive';
-    }
-
+    public $user_token_list = 'user_token_list';
 
     public function config($key, $default = '')
     {
@@ -142,12 +136,13 @@ class RedisDrive implements DriveInterface
         $this->redis()->hDel($this->user_token_list, $this->hashKey($userObj));
     }
 
-    public function refresh($token)
+    public function refresh(AuthUserObj $userObj)
     {
-        $userObj = $this->verify($token);
-        if (Carbon::parse($userObj->expire_date)->diffInSeconds(Carbon::now()) < 3600) {
-            $userObj->refresh(3600);
-            $this->saveToken($userObj);
+        if ($userObj->allow_refresh_token) {
+            if (Carbon::parse($userObj->expire_date)->diffInSeconds(Carbon::now()) < 3600) {
+                $userObj->refresh(3600);
+                $this->saveToken($userObj);
+            }
         }
     }
 
@@ -173,12 +168,14 @@ class RedisDrive implements DriveInterface
             if (!empty($cacheUserObj) && $cacheUserObj instanceof AuthUserObj) {
                 return $cacheUserObj;
             }
+
             $locaUserObj = $this->redis()->hGet($this->user_token_list, $hash_key);
             if (!empty($locaUserObj)) {
                 $locaUserObj = unserialize($locaUserObj);
                 if ($locaUserObj instanceof AuthUserObj) {
                     if (Carbon::parse($locaUserObj->expire_date) > Carbon::now()) {
                         $this->setCache($hash_key, $userObj);
+                        $this->refresh($userObj);
                         return $locaUserObj;
                     }
                 }

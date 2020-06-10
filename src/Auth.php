@@ -27,7 +27,11 @@ class Auth implements AuthInterface
 
     public function getStorage(): DriveInterface
     {
-        return make(RedisDrive::class);
+
+        $drive = $this->config->get('auth.drive', null);
+        if (!empty($drive) || $drive instanceof DriveInterface) {
+            return make($drive);
+        }
     }
 
     public function login(string $guard, object $user)
@@ -112,8 +116,8 @@ class Auth implements AuthInterface
         if (!class_exists($model)) {
             throw new AuthModelNothingnessException('用户模型不存在' . $model);
         }
-        $userModel =  new $model;
-        if ($userModel instanceof AuthUserInterface){
+        $userModel = new $model;
+        if ($userModel instanceof AuthUserInterface) {
             return $userModel;
         }
         throw new NotInheritedInterfaceException('不是AuthUserInterface的实现');
