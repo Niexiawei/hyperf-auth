@@ -7,11 +7,13 @@ use Carbon\Carbon;
 use Hyperf\Contract\ConfigInterface;
 use Hyperf\Di\Annotation\Inject;
 use Hyperf\Redis\RedisFactory;
+use Hyperf\Utils\ApplicationContext;
 use Hyperf\Utils\Context;
 use Niexiawei\Auth\AllowRefreshOrNotInterface;
 use Niexiawei\Auth\AuthUserObj;
 use Niexiawei\Auth\DriveInterface;
 use Niexiawei\Auth\setTokenExpireInterface;
+use Niexiawei\Auth\SwooleTableIncr;
 use Niexiawei\Auth\Util;
 
 class RedisDrive implements DriveInterface
@@ -52,6 +54,16 @@ class RedisDrive implements DriveInterface
         return $this->RedisFactory->get($pool);
     }
 
+    private function maxLoginNum(AuthUserObj $userObj): int
+    {
+        $gurad = $userObj->guard;
+        $config = $this->config('guards.' . $gurad);
+        if (isset($config['max_login_num'])) {
+            return $config['max_login_num'];
+        }
+        return $this->config('max_login_num', 7);
+    }
+
     private function getTTL()
     {
         $config = $this->config('expire', 3600 * 24);
@@ -59,9 +71,8 @@ class RedisDrive implements DriveInterface
         return $second;
     }
 
-    public function getUidTokens(string $token)
+    public function getUidTokens(AuthUserObj $userObj)
     {
-        $userObj = $this->verify($token);
         $tokens = [];
         $now = Carbon::now();
         $search = $userObj->user_id . '_*';
@@ -82,11 +93,11 @@ class RedisDrive implements DriveInterface
         return $tokens;
     }
 
-    public function delSurplusToken($token)
+    public function delSurplusToken(AuthUserObj $userObj)
     {
-        $tokens = $this->getUidTokens($token);
+        $tokens = $this->getUidTokens($userObj);
         $num = count($tokens);
-        $max_num = $this->config('max_login_num', 7) - 1;
+        $max_num = $this->maxLoginNum($userObj) - 1;
         if ($num > $max_num) {
             usort($tokens, function ($prv, $next) {
                 if ($prv[1] == $next) return 0;
@@ -124,9 +135,11 @@ class RedisDrive implements DriveInterface
     {
         $userObj = new AuthUserObj($uid, $guard, $this->getTTL(), $this->getAllowRefreshToken());
         $token = $this->util->encryption(serialize($userObj));
+
+        $this->delSurplusToken($userObj);
+        $this->delExpireToken();
+
         $this->saveToken($userObj);
-        $this->delSurplusToken($token);
-        $this->delExpireToken($token);
         return $token;
     }
 
@@ -146,20 +159,44 @@ class RedisDrive implements DriveInterface
         }
     }
 
-    private function delExpireToken($token)
+
+    private function incr(): SwooleTableIncr
     {
-        $tokens = $this->getUidTokens($token);
-        $now = Carbon::now()->getTimestamp();
-        $this->redis()->multi(\Redis::PIPELINE);
-        foreach ($tokens as $value) {
-            if ($value[1] < $now) {
-                $this->redis()->hDel($this->user_token_list, $value[0]);
-            }
-        }
-        $this->redis()->exec();
+        return ApplicationContext::getContainer()->get(SwooleTableIncr::class);
     }
 
-    public function verify($token): AuthUserObj
+    private function delExpireToken()
+    {
+        $clearExpireToken = function () {
+            $now = Carbon::now()->getTimestamp();
+            $it = null;
+            while (true) {
+                $arr = $this->redis()->hScan($this->user_token_list, $it, '*', 200);
+                if ($arr === false) {
+                    break;
+                }
+                $this->redis()->multi(\Redis::PIPELINE);
+                foreach ($arr as $key => $value) {
+                    $value = unserialize($value);
+                    print_r($value);
+                    if ($value instanceof AuthUserObj) {
+                        if (Carbon::parse($value->expire_date)->getTimestamp() < $now) {
+                            $this->redis()->hDel($this->user_token_list, $value[0]);
+                        }
+                    }
+                }
+                $this->redis()->exec();
+            }
+        };
+        if ($this->incr()->getNum() > 200) {
+            $clearExpireToken();
+            $this->incr()->initNum();
+        } else {
+            $this->incr()->addIncr();
+        }
+    }
+
+    public function verify($token, $local_verify = true): AuthUserObj
     {
         $userObj = unserialize($this->util->decrypt($token));
         if ($userObj instanceof AuthUserObj) {
@@ -168,21 +205,22 @@ class RedisDrive implements DriveInterface
             if (!empty($cacheUserObj) && $cacheUserObj instanceof AuthUserObj) {
                 return $cacheUserObj;
             }
-
-            $locaUserObj = $this->redis()->hGet($this->user_token_list, $hash_key);
-            if (!empty($locaUserObj)) {
-                $locaUserObj = unserialize($locaUserObj);
-                if ($locaUserObj instanceof AuthUserObj) {
-                    if (Carbon::parse($locaUserObj->expire_date) > Carbon::now()) {
-                        $this->setCache($hash_key, $userObj);
-                        $this->refresh($userObj);
-                        return $locaUserObj;
+            if ($local_verify) {
+                $locaUserObj = $this->redis()->hGet($this->user_token_list, $hash_key);
+                if (!empty($locaUserObj)) {
+                    $locaUserObj = unserialize($locaUserObj);
+                    if ($locaUserObj instanceof AuthUserObj) {
+                        if (Carbon::parse($locaUserObj->expire_date) > Carbon::now()) {
+                            $this->setCache($hash_key, $userObj);
+                            $this->refresh($userObj);
+                            return $locaUserObj;
+                        }
                     }
                 }
+            } else {
+                return $userObj;
             }
         }
-
-
         throw new \Exception('无效的Token');
     }
 
