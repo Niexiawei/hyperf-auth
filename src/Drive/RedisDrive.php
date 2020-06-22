@@ -43,6 +43,10 @@ class RedisDrive implements DriveInterface
         return $this->config->get('auth.' . $key, $default);
     }
 
+    private function getUserTokenList(AuthUserObj $userObj){
+        return $this->user_token_list.$userObj->guard;
+    }
+
     /**
      * @return \Hyperf\Redis\RedisProxy|\Redis
      * 获取Redis
@@ -79,7 +83,7 @@ class RedisDrive implements DriveInterface
         $it = null;
         $del_expire_token = [];
         while (true) {
-            $arr = $this->redis()->hScan($this->user_token_list, $it, $search);
+            $arr = $this->redis()->hScan($this->getUserTokenList($userObj), $it, $search);
             if ($arr === false) {
                 break;
             }
@@ -95,6 +99,7 @@ class RedisDrive implements DriveInterface
 
     public function delSurplusToken(AuthUserObj $userObj)
     {
+        $userTokenList = $this->getUserTokenList($userObj);
         $tokens = $this->getUidTokens($userObj);
         $num = count($tokens);
         $max_num = $this->maxLoginNum($userObj) - 1;
@@ -105,11 +110,9 @@ class RedisDrive implements DriveInterface
             });
             $diff_num = $num - $max_num;
             $del_tokens = array_slice($tokens, 0, $diff_num);
-            $this->redis()->multi(\Redis::PIPELINE);
             foreach ($del_tokens as $value) {
-                $this->redis()->hDel($this->user_token_list, $value[0]);
+                $this->redis()->hDel($userTokenList, $value[0]);
             }
-            $this->redis()->exec();
         }
     }
 
@@ -126,7 +129,7 @@ class RedisDrive implements DriveInterface
 
     private function saveToken(AuthUserObj $userObj)
     {
-        $this->redis()->hMSet($this->user_token_list, [
+        $this->redis()->hMSet($this->getUserTokenList($userObj), [
             $this->hashKey($userObj) => serialize($userObj)
         ]);
     }
@@ -135,10 +138,8 @@ class RedisDrive implements DriveInterface
     {
         $userObj = new AuthUserObj($uid, $guard, $this->getTTL(), $this->getAllowRefreshToken());
         $token = $this->util->encryption(serialize($userObj));
-
         $this->delSurplusToken($userObj);
-        $this->delExpireToken();
-
+        $this->delExpireToken($userObj);
         $this->saveToken($userObj);
         return $token;
     }
@@ -146,7 +147,7 @@ class RedisDrive implements DriveInterface
     public function delete($token)
     {
         $userObj = $this->verify($token);
-        $this->redis()->hDel($this->user_token_list, $this->hashKey($userObj));
+        $this->redis()->hDel($this->getUserTokenList($userObj), $this->hashKey($userObj));
     }
 
     public function refresh(AuthUserObj $userObj)
@@ -165,34 +166,32 @@ class RedisDrive implements DriveInterface
         return ApplicationContext::getContainer()->get(SwooleTableIncr::class);
     }
 
-    private function delExpireToken()
+    private function delExpireToken(AuthUserObj $userObj)
     {
-        $clearExpireToken = function () {
-            $now = Carbon::now()->getTimestamp();
-            $it = null;
-            while (true) {
-                $arr = $this->redis()->hScan($this->user_token_list, $it, '*', 200);
-                if ($arr === false) {
-                    break;
-                }
-                $this->redis()->multi(\Redis::PIPELINE);
-                foreach ($arr as $key => $value) {
-                    $value = unserialize($value);
-                    print_r($value);
-                    if ($value instanceof AuthUserObj) {
-                        if (Carbon::parse($value->expire_date)->getTimestamp() < $now) {
-                            $this->redis()->hDel($this->user_token_list, $value[0]);
-                        }
-                    }
-                }
-                $this->redis()->exec();
-            }
-        };
-        if ($this->incr()->getNum() > 200) {
-            $clearExpireToken();
+        if ($this->incr()->getNum() >= 200) {
+            $this->delExpireTokenFunc($userObj);
             $this->incr()->initNum();
         } else {
             $this->incr()->addIncr();
+        }
+    }
+
+    private function delExpireTokenFunc(AuthUserObj $userObj){
+        $userTokenList = $this->getUserTokenList($userObj);
+        $now = Carbon::now()->getTimestamp();
+        $it = null;
+        while (true) {
+            $arr = $this->redis()->hScan($userTokenList, $it, '*', 200);
+            if ($arr === false) {
+                break;
+            }
+            foreach ($arr as $key => $value) {
+                if ($value instanceof AuthUserObj) {
+                    if (Carbon::parse($value->expire_date)->getTimestamp() < $now) {
+                        $this->redis()->hDel($userTokenList,$key);
+                    }
+                }
+            }
         }
     }
 
@@ -200,13 +199,14 @@ class RedisDrive implements DriveInterface
     {
         $userObj = unserialize($this->util->decrypt($token));
         if ($userObj instanceof AuthUserObj) {
+            $userTokenList = $this->getUserTokenList($userObj);
             $hash_key = $this->hashKey($userObj);
             $cacheUserObj = $this->getCache($hash_key);
             if (!empty($cacheUserObj) && $cacheUserObj instanceof AuthUserObj) {
                 return $cacheUserObj;
             }
             if ($local_verify) {
-                $locaUserObj = $this->redis()->hGet($this->user_token_list, $hash_key);
+                $locaUserObj = $this->redis()->hGet($userTokenList, $hash_key);
                 if (!empty($locaUserObj)) {
                     $locaUserObj = unserialize($locaUserObj);
                     if ($locaUserObj instanceof AuthUserObj) {
