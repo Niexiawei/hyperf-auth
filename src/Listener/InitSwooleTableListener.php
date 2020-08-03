@@ -15,7 +15,7 @@ class InitSwooleTableListener implements ListenerInterface
     {
         return [
             BootApplication::class
-        ]
+        ];
     }
 
     public function process(object $event)

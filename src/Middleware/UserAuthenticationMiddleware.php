@@ -8,7 +8,6 @@ use Hyperf\HttpServer\Contract\RequestInterface;
 use Hyperf\Utils\ApplicationContext;
 use Hyperf\Utils\Context;
 use Niexiawei\Auth\AuthInterface;
-use Niexiawei\Auth\IsAuthInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Server\MiddlewareInterface;

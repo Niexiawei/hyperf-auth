@@ -44,8 +44,9 @@ class RedisDrive implements DriveInterface
         return $this->config->get('auth.' . $key, $default);
     }
 
-    private function getUserTokenList(AuthUserObj $userObj){
-        return $this->user_token_list.$userObj->guard;
+    private function getUserTokenList(AuthUserObj $userObj)
+    {
+        return $this->user_token_list . $userObj->guard;
     }
 
     /**
@@ -79,10 +80,8 @@ class RedisDrive implements DriveInterface
     public function getUidTokens(AuthUserObj $userObj)
     {
         $tokens = [];
-        $now = Carbon::now();
         $search = $userObj->user_id . '_*';
         $it = null;
-        $del_expire_token = [];
         while (true) {
             $arr = $this->redis()->hScan($this->getUserTokenList($userObj), $it, $search);
             if ($arr === false) {
@@ -154,24 +153,20 @@ class RedisDrive implements DriveInterface
 
     public function refresh($token)
     {
-        $userObj = $this->verify($token,false);
-
-        if($userObj->allow_refresh_token){
+        $userObj = $this->verify($token, false);
+        var_dump($userObj);
+        if ($userObj->allow_refresh_token) {
             $now = Carbon::now();
             $expire = $userObj->expire_date;
-            if($now->diffInSeconds(Carbon::parse($expire)) < $this->config('allow_timeout_refresh',30)){
+            var_dump($now->diffInSeconds(Carbon::parse($expire)));
+            if ($now->diffInSeconds(Carbon::parse($expire)) > $this->config('allow_timeout_refresh', 30)) {
                 $this->delete($token);
-                $token = $this->generate($userObj->guard,$userObj->user_id);
+                $token = $this->generate($userObj->guard, $userObj->user_id);
                 return $token;
-            } 
-            // if(Carbon::parse($expire) >= $now){
-               
-            // }else{
-                 
-            // }
+            }
         }
-    
-        throw new TokenUnableToRefreshException();
+
+        throw new TokenUnableToRefreshException('Token无法刷新！');
 
     }
 
@@ -191,7 +186,8 @@ class RedisDrive implements DriveInterface
         }
     }
 
-    private function delExpireTokenFunc(AuthUserObj $userObj){
+    private function delExpireTokenFunc(AuthUserObj $userObj)
+    {
         $userTokenList = $this->getUserTokenList($userObj);
         $now = Carbon::now()->getTimestamp();
         $it = null;
@@ -203,7 +199,7 @@ class RedisDrive implements DriveInterface
             foreach ($arr as $key => $value) {
                 if ($value instanceof AuthUserObj) {
                     if (Carbon::parse($value->expire_date)->getTimestamp() < $now) {
-                        $this->redis()->hDel($userTokenList,$key);
+                        $this->redis()->hDel($userTokenList, $key);
                     }
                 }
             }
@@ -228,7 +224,6 @@ class RedisDrive implements DriveInterface
                     if ($locaUserObj instanceof AuthUserObj) {
                         if (Carbon::parse($locaUserObj->expire_date) > Carbon::now()) {
                             $this->setCache($hash_key, $userObj);
-                            $this->refresh($userObj);
                             return $locaUserObj;
                         }
                     }

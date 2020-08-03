@@ -25,8 +25,4 @@ class AuthUserObj
         $this->allow_refresh_token = $allow_refresh_token;
         $this->str = Str::random(32).':'.uniqid();
     }
-
-    public function refresh($expire_sec = 7200){
-        $this->expire_date = Carbon::now()->addSeconds($expire_sec)->toDateTimeString();
-    }
 }

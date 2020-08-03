@@ -30,5 +30,4 @@ class InitAuthKeyListener implements ListenerInterface
             $config->set('auth.key', $key);
         }
     }
-
 }
