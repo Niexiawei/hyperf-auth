@@ -14,6 +14,8 @@ namespace Niexiawei\Auth;
 
 use Niexiawei\Auth\Command\GenerateAuthKeyCommand;
 use Niexiawei\Auth\Listener\AppBootListener;
+use Niexiawei\Auth\Listener\InitAuthKeyListener;
+use Niexiawei\Auth\Listener\InitSwooleTableListener;
 
 class ConfigProvider
 {
@@ -34,7 +36,8 @@ class ConfigProvider
                 ],
             ],
             'listeners' => [
-                AppBootListener::class
+                InitAuthKeyListener::class,
+                InitSwooleTableListener::class
             ],
             'publish' => [
                 [

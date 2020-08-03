@@ -12,6 +12,7 @@ use Hyperf\Utils\Context;
 use Niexiawei\Auth\AllowRefreshOrNotInterface;
 use Niexiawei\Auth\AuthUserObj;
 use Niexiawei\Auth\DriveInterface;
+use Niexiawei\Auth\Exception\TokenUnableToRefreshException;
 use Niexiawei\Auth\setTokenExpireInterface;
 use Niexiawei\Auth\SwooleTableIncr;
 use Niexiawei\Auth\Util;
@@ -150,14 +151,28 @@ class RedisDrive implements DriveInterface
         $this->redis()->hDel($this->getUserTokenList($userObj), $this->hashKey($userObj));
     }
 
-    public function refresh(AuthUserObj $userObj)
+
+    public function refresh($token)
     {
-        if ($userObj->allow_refresh_token) {
-            if (Carbon::parse($userObj->expire_date)->diffInSeconds(Carbon::now()) < 3600) {
-                $userObj->refresh(3600);
-                $this->saveToken($userObj);
-            }
+        $userObj = $this->verify($token,false);
+
+        if($userObj->allow_refresh_token){
+            $now = Carbon::now();
+            $expire = $userObj->expire_date;
+            if($now->diffInSeconds(Carbon::parse($expire)) < $this->config('allow_timeout_refresh',30)){
+                $this->delete($token);
+                $token = $this->generate($userObj->guard,$userObj->user_id);
+                return $token;
+            } 
+            // if(Carbon::parse($expire) >= $now){
+               
+            // }else{
+                 
+            // }
         }
+    
+        throw new TokenUnableToRefreshException();
+
     }
 
 
@@ -198,6 +213,7 @@ class RedisDrive implements DriveInterface
     public function verify($token, $local_verify = true): AuthUserObj
     {
         $userObj = unserialize($this->util->decrypt($token));
+
         if ($userObj instanceof AuthUserObj) {
             $userTokenList = $this->getUserTokenList($userObj);
             $hash_key = $this->hashKey($userObj);

@@ -17,7 +17,7 @@ return [
     'expire' => 3600 * 24,//token过期时间
     'key' => '',
     'max_login_num' => 7, // 最大登录客户端
-    'max_login_time' => 3600 * 24 * 30,
+    'allow_timeout_refresh' => 60,
     'redis_pool' => 'auth',
     'drive' => \Niexiawei\Auth\Drive\RedisDrive::class
 ];

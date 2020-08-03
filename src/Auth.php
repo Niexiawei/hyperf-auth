@@ -34,6 +34,11 @@ class Auth implements AuthInterface
         }
     }
 
+    public function refresh(){
+        $token = $this->getToken();
+        return $this->getStorage()->refresh($token);
+    }
+
     public function login(string $guard, object $user)
     {
         return $this->getStorage()->generate($guard, $user->id);

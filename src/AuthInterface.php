@@ -17,4 +17,5 @@ interface AuthInterface
     public function setTTL(int $second):Auth;
     public function setAllowRefreshToken(bool $allow = true):Auth;
     public function guard();
+    public function refresh();
 }
