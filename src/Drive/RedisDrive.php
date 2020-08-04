@@ -154,11 +154,9 @@ class RedisDrive implements DriveInterface
     public function refresh($token)
     {
         $userObj = $this->verify($token, false);
-        var_dump($userObj);
         if ($userObj->allow_refresh_token) {
             $now = Carbon::now();
             $expire = $userObj->expire_date;
-            var_dump($now->diffInSeconds(Carbon::parse($expire)));
             if ($now->diffInSeconds(Carbon::parse($expire)) > $this->config('allow_timeout_refresh', 30)) {
                 $this->delete($token);
                 $token = $this->generate($userObj->guard, $userObj->user_id);
