@@ -206,8 +206,10 @@ class RedisDrive implements DriveInterface
 
     public function verify($token, $local_verify = true): AuthUserObj
     {
+        if (empty($token)){
+            throw new \Exception('无效的Token');
+        }
         $userObj = unserialize($this->util->decrypt($token));
-
         if ($userObj instanceof AuthUserObj) {
             $userTokenList = $this->getUserTokenList($userObj);
             $hash_key = $this->hashKey($userObj);

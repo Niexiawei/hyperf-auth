@@ -25,6 +25,19 @@ class Auth implements AuthInterface
         $this->config = $container->get(ConfigInterface::class);
     }
 
+    public function tokenToUser($token){
+        $user_info = $this->getStorage()->verify($token);
+        $guard = $user_info->guard;
+        $model = $this->config->get('auth.guards.' . $guard . '.model');
+        $user = $this->getModel($guard)->authFind($user_info->user_id);
+
+        if ($user instanceof $model) {
+            return $user;
+        }
+
+        throw new \Exception('用户不存在');
+    }
+
     public function getStorage(): DriveInterface
     {
 
