@@ -10,5 +10,5 @@ interface AuthUserInterface
 
     public function getId();
 
-    public function authFind($id);
+    public function authFind($id,$cloum = null);
 }

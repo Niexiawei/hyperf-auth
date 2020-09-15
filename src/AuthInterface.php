@@ -14,7 +14,7 @@ interface AuthInterface
 
     public function check();
 
-    public function user(): object;
+    public function user($cloumn = null,$refresh = true): object;
 
     public function formatToken();
 
@@ -30,5 +30,5 @@ interface AuthInterface
 
     public function refresh();
 
-    public function tokenToUser($token);
+    public function tokenToUser($token,$refresh = true);
 }

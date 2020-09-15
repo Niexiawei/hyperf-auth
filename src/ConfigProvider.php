@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Niexiawei\Auth;
 
+use Niexiawei\Auth\Cache\RedisCache;
 use Niexiawei\Auth\Command\GenerateAuthKeyCommand;
 use Niexiawei\Auth\Listener\AppBootListener;
 use Niexiawei\Auth\Listener\InitAuthKeyListener;
@@ -23,7 +24,8 @@ class ConfigProvider
     {
         return [
             'dependencies' => [
-                AuthInterface::class => Auth::class
+                AuthInterface::class => Auth::class,
+                CacheInterface::class => RedisCache::class
             ],
             'commands' => [
                 GenerateAuthKeyCommand::class

@@ -17,21 +17,36 @@ class Auth implements AuthInterface
     private $container;
     private $request;
     private $config;
+    private $cache;
 
     public function __construct(Container $container)
     {
         $this->container = $container;
         $this->request = $container->get(RequestInterface::class);
         $this->config = $container->get(ConfigInterface::class);
+        $this->cache = $container->get(CacheInterface::class);
     }
 
-    public function tokenToUser($token){
+    public function tokenToUser($token, $refresh = true)
+    {
         $user_info = $this->getStorage()->verify($token);
         $guard = $user_info->guard;
         $model = $this->config->get('auth.guards.' . $guard . '.model');
-        $user = $this->getModel($guard)->authFind($user_info->user_id);
+        $userModel = $this->getModel($guard);
+
+        if (!$refresh) {
+            $user = $this->cache->get($userModel, $user_info->user_id);
+            if (!empty($user)) {
+                return $user;
+            }
+        }
+
+        $user = $userModel->authFind($user_info->user_id);
 
         if ($user instanceof $model) {
+
+            $this->cache->set($userModel, $user_info->user_id, $user);
+
             return $user;
         }
 
@@ -47,7 +62,8 @@ class Auth implements AuthInterface
         }
     }
 
-    public function refresh(){
+    public function refresh()
+    {
         $token = $this->getToken();
         return $this->getStorage()->refresh($token);
     }
@@ -108,19 +124,30 @@ class Auth implements AuthInterface
         return true;
     }
 
-    public function user(): object
+    public function user($cloumn = null, $refresh = true): object
     {
         $user = Context::get(UserContextInterface::class, []);
         if ($user) {
             return $user;
         }
+
         if ($this->check()) {
             if ($this->getUserInfo()->user_id) {
                 $guard = $this->getUserInfo()->guard;
                 $model = $this->config->get('auth.guards.' . $guard . '.model');
-                $user = $this->getModel($guard)->authFind($this->getUserInfo()->user_id);
+                $userModel = $this->getModel($guard);
+
+                if (!$refresh) {
+                    $user = $this->cache->get($userModel, $this->getUserInfo()->user_id);
+                    if (!empty($user)) {
+                        return $user;
+                    }
+                }
+
+                $user = $userModel->authFind($this->getUserInfo()->user_id, $cloumn);
                 if ($user instanceof $model) {
                     Context::set(UserContextInterface::class, $user);
+                    $this->cache->set($userModel, $this->getUserInfo()->user_id, $user);
                     return $user;
                 }
             }
