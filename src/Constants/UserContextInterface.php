@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Niexiawei\Auth;
+namespace Niexiawei\Auth\Constants;
 
 
 interface UserContextInterface

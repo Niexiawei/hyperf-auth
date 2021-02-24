@@ -14,9 +14,7 @@ namespace Niexiawei\Auth;
 
 use Niexiawei\Auth\Cache\RedisCache;
 use Niexiawei\Auth\Command\GenerateAuthKeyCommand;
-use Niexiawei\Auth\Listener\AppBootListener;
 use Niexiawei\Auth\Listener\InitAuthKeyListener;
-use Niexiawei\Auth\Listener\InitSwooleTableListener;
 
 class ConfigProvider
 {
@@ -39,7 +37,6 @@ class ConfigProvider
             ],
             'listeners' => [
                 InitAuthKeyListener::class,
-                InitSwooleTableListener::class
             ],
             'publish' => [
                 [

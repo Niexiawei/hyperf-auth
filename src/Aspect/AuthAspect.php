@@ -3,7 +3,7 @@
 
 namespace Niexiawei\Auth\Aspect;
 
-use Niexiawei\Auth\Annotation\CheckUser as Auth;
+use Niexiawei\Auth\Annotation\Auth;
 use Hyperf\Di\Annotation\Aspect;
 use Hyperf\Di\Aop\AbstractAspect;
 use Hyperf\Di\Aop\ProceedingJoinPoint;
@@ -17,7 +17,7 @@ use Psr\Container\ContainerInterface;
  * @Aspect()
  */
 
-class AopAuth extends AbstractAspect
+class AuthAspect extends AbstractAspect
 {
     public $annotations= [
        Auth::class

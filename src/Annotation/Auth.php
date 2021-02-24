@@ -10,7 +10,7 @@ use Hyperf\Di\Annotation\AbstractAnnotation;
  * @Target({"CLASS", "METHOD"})
  */
 
-class CheckUser extends AbstractAnnotation
+class Auth extends AbstractAnnotation
 {
 
 }

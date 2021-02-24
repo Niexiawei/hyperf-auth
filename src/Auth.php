@@ -7,10 +7,11 @@ use Hyperf\Contract\ConfigInterface;
 use Hyperf\Di\Container;
 use Hyperf\HttpServer\Contract\RequestInterface;
 use Hyperf\Utils\Context;
-use Niexiawei\Auth\Drive\RedisDrive;
 use Niexiawei\Auth\Exception\AuthModelNothingnessException;
 use Niexiawei\Auth\Exception\NotInheritedInterfaceException;
-use Swoole\Exception;
+use Niexiawei\Auth\Constants\AllowRefreshOrNotInterface;
+use Niexiawei\Auth\Constants\setTokenExpireInterface;
+use Niexiawei\Auth\Constants\UserContextInterface;
 
 class Auth implements AuthInterface
 {
