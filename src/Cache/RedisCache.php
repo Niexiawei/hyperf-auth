@@ -14,28 +14,28 @@ class RedisCache
     protected $redis;
 
     /**
-     * @param object $model
-     * @param $user_id
+     * @param string $gurad
+     * @param int $user_id
      */
 
-    public function set(object $model, $user_id, object $user)
+    public function set($gurad, $user_id, object $user)
     {
-        $key = 'auth_cache:' . md5(serialize($model) . $user_id);
-
+        $key = 'auth_cache:' . $gurad.'_'.$user_id;
         $this->redis->setex($key, 3600, serialize($user));
     }
 
     /**
-     * @param object $model
-     * @param $user_id
+     * @param string $gurad
+     * @param int $user_id
      * @param false $refresh
      */
 
-    public function get(object $model, $user_id)
+    public function get($gurad, $user_id)
     {
-        $key = 'auth_cache:' . md5(serialize($model) . $user_id);
+        $key = 'auth_cache:' . $gurad.'_'.$user_id;
+
         $user_string = $this->redis->get($key);
-        if (empty($user_string)) {
+        if ($user_string) {
             $object = unserialize($user_string);
             if (is_object($object)) {
                 return $object;

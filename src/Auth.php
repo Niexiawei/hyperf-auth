@@ -36,7 +36,7 @@ class Auth implements AuthInterface
         $userModel = $this->getModel($guard);
 
         if (!$refresh) {
-            $user = $this->cache->get($userModel, $user_info->user_id);
+            $user = $this->cache->get($guard, $user_info->user_id);
             if (!empty($user)) {
                 return $user;
             }
@@ -46,7 +46,7 @@ class Auth implements AuthInterface
 
         if ($user instanceof $model) {
 
-            $this->cache->set($userModel, $user_info->user_id, $user);
+            $this->cache->set($guard, $user_info->user_id, $user);
 
             return $user;
         }
@@ -135,11 +135,12 @@ class Auth implements AuthInterface
         if ($this->check()) {
             if ($this->getUserInfo()->user_id) {
                 $guard = $this->getUserInfo()->guard;
+                
                 $model = $this->config->get('auth.guards.' . $guard . '.model');
                 $userModel = $this->getModel($guard);
 
                 if (!$refresh) {
-                    $user = $this->cache->get($userModel, $this->getUserInfo()->user_id);
+                    $user = $this->cache->get($guard, $this->getUserInfo()->user_id);
                     if (!empty($user)) {
                         return $user;
                     }
@@ -148,7 +149,7 @@ class Auth implements AuthInterface
                 $user = $userModel->authFind($this->getUserInfo()->user_id, $cloumn);
                 if ($user instanceof $model) {
                     Context::set(UserContextInterface::class, $user);
-                    $this->cache->set($userModel, $this->getUserInfo()->user_id, $user);
+                    $this->cache->set($guard, $this->getUserInfo()->user_id, $user);
                     return $user;
                 }
             }

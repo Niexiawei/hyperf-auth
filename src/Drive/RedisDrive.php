@@ -191,7 +191,7 @@ class RedisDrive implements DriveInterface
         if (empty($token)) {
             throw new \Exception('无效的Token');
         }
-
+        
         $userObj = unserialize($this->util->decrypt($token));
 
         if ($local_verify && is_object($userObj)){

@@ -35,6 +35,6 @@ class Util
 
     public function decrypt($data)
     {
-        return openssl_decrypt(base64_decode($data), $this->method, $this->key(),0,$this->iv());
+        return openssl_decrypt(base64_decode($data), $this->method, $this->key(), 0, $this->iv());
     }
 }

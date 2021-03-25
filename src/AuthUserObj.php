@@ -5,6 +5,7 @@ namespace Niexiawei\Auth;
 
 
 use Carbon\Carbon;
+use Hyperf\Utils\ApplicationContext;
 use Hyperf\Utils\Str;
 
 class AuthUserObj
