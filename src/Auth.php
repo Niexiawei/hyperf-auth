@@ -12,6 +12,7 @@ use Niexiawei\Auth\Exception\NotInheritedInterfaceException;
 use Niexiawei\Auth\Constants\AllowRefreshOrNotInterface;
 use Niexiawei\Auth\Constants\setTokenExpireInterface;
 use Niexiawei\Auth\Constants\UserContextInterface;
+use Niexiawei\Auth\Exception\NoTokenPassedInException;
 
 class Auth implements AuthInterface
 {
@@ -100,9 +101,10 @@ class Auth implements AuthInterface
     public function check()
     {
         $token = $this->getToken();
-        if (empty($token)) {
-            return false;
+        if (empty($token) || mb_strlen($token) <= 0) {
+            throw new NoTokenPassedInException();
         }
+
         $user_info = $this->getStorage()->verify($token);
         $this->setUserInfo($user_info);
         return true;
@@ -135,7 +137,7 @@ class Auth implements AuthInterface
         if ($this->check()) {
             if ($this->getUserInfo()->user_id) {
                 $guard = $this->getUserInfo()->guard;
-                
+
                 $model = $this->config->get('auth.guards.' . $guard . '.model');
                 $userModel = $this->getModel($guard);
 
