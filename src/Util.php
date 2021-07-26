@@ -4,6 +4,7 @@
 namespace Niexiawei\Auth;
 
 
+use Hyperf\Config\Annotation\Value;
 use Hyperf\Contract\ConfigInterface;
 use Hyperf\Utils\ApplicationContext;
 use Hyperf\Utils\Str;
@@ -12,15 +13,19 @@ class Util
 {
     public $method = 'aes-256-cbc';
 
-    public function config()
-    {
-        $config = ApplicationContext::getContainer()->get(ConfigInterface::class);
-        return $config->get('auth');
-    }
+    /**
+     * @var array
+     * @Value("auth")
+     */
+    protected $auth_config;
 
     private function key()
     {
-        return $this->config()['key'];
+        $key = $this->auth_config['key'];
+        if (mb_strlen($key) <= 0) {
+            throw new \Exception("key文件不存在，请手动使用命令生成");
+        }
+        return $key;
     }
 
     private function iv()
