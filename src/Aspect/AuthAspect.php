@@ -3,11 +3,11 @@
 
 namespace Niexiawei\Auth\Aspect;
 
-use Niexiawei\Auth\Annotation\Auth;
 use Hyperf\Di\Annotation\Aspect;
 use Hyperf\Di\Aop\AbstractAspect;
 use Hyperf\Di\Aop\ProceedingJoinPoint;
 use Hyperf\HttpServer\Contract\ResponseInterface;
+use Niexiawei\Auth\Annotation\Auth;
 use Niexiawei\Auth\AuthInterface;
 use Psr\Container\ContainerInterface;
 
@@ -16,16 +16,16 @@ use Psr\Container\ContainerInterface;
  * @package App\Aspect
  * @Aspect()
  */
-
 class AuthAspect extends AbstractAspect
 {
-    public $annotations= [
-       Auth::class
+    public $annotations = [
+        Auth::class
     ];
 
     public $container;
     public $response;
     public $auth;
+
     public function __construct(ContainerInterface $container)
     {
         $this->container = $container;
@@ -35,11 +35,11 @@ class AuthAspect extends AbstractAspect
 
     public function process(ProceedingJoinPoint $proceedingJoinPoint)
     {
-        if($this->auth->check()){
+        try {
+            $this->auth->check();
             return $proceedingJoinPoint->process();
-        }else{
-            return $this->response->json(['code'=>401,'msg'=>'你还未登录']);
+        } catch (\Throwable $exception) {
+            return $this->response->json(['code' => 401, 'msg' => $exception->getMessage()]);
         }
     }
-
 }
