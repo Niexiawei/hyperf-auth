@@ -19,5 +19,6 @@ return [
     'max_login_num' => 7, // 最大登录客户端
     'allow_timeout_refresh' => 60,
     'redis_pool' => 'auth',
-    'drive' => \Niexiawei\Auth\Drive\RedisDrive::class
+    'drive' => \Niexiawei\Auth\Drive\RedisDrive::class,
+    'key_drive' => 'local'
 ];

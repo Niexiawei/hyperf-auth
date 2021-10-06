@@ -1,4 +1,4 @@
-# hyperf 框架的 auth组件
+# 适用于hyperf框架的Auth组件
 
 ```
 .....
