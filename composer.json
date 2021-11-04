@@ -21,10 +21,10 @@
     }
   },
   "require": {
-    "php": ">=7.4",
+    "php": ">=8.0",
     "ext-json": "*",
     "ext-redis": "*",
-    "ext-swoole": ">=4.5",
+    "ext-swoole": ">=4.7",
     "hyperf/command": "^2.1.0",
     "hyperf/crontab": "^2.1.0",
     "hyperf/di": "^2.1.0",

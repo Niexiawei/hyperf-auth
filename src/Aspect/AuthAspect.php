@@ -9,6 +9,8 @@ use Hyperf\Di\Aop\ProceedingJoinPoint;
 use Hyperf\HttpServer\Contract\ResponseInterface;
 use Niexiawei\Auth\Annotation\Auth;
 use Niexiawei\Auth\AuthInterface;
+use Niexiawei\Auth\Exception\TokenInvalidException;
+use Niexiawei\Auth\Exception\TokenUnableToRefreshException;
 use Psr\Container\ContainerInterface;
 
 /**
@@ -39,7 +41,7 @@ class AuthAspect extends AbstractAspect
         try {
             $this->auth->check();
             return $proceedingJoinPoint->process();
-        } catch (\Throwable $exception) {
+        } catch (TokenInvalidException | TokenUnableToRefreshException $exception) {
             return $this->response->json(['code' => 401, 'msg' => $exception->getMessage()]);
         }
     }

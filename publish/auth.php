@@ -20,5 +20,5 @@ return [
     'allow_timeout_refresh' => 60,
     'redis_pool' => 'auth',
     'drive' => \Niexiawei\Auth\Drive\RedisDrive::class,
-    'key_drive' => 'local'
+    'encryption_key_drive' => '' //加密 key 存储位置
 ];

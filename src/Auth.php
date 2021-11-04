@@ -204,9 +204,4 @@ class Auth implements AuthInterface
         Context::set('token', $token);
         return $this;
     }
-
-    public function formatToken()
-    {
-
-    }
 }
