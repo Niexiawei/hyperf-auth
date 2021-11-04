@@ -16,8 +16,6 @@ interface AuthInterface
 
     public function user($cloumn = null,$refresh = true): object;
 
-    public function formatToken();
-
     public function getToken();
 
     public function setToken($token): Auth;
