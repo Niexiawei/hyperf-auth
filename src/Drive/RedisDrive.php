@@ -5,6 +5,7 @@ namespace Niexiawei\Auth\Drive;
 
 use Carbon\Carbon;
 use Hyperf\Contract\ConfigInterface;
+use Hyperf\Crontab\Annotation\Crontab;
 use Hyperf\Di\Annotation\Inject;
 use Hyperf\Redis\RedisFactory;
 use Hyperf\Utils\Context;
@@ -64,13 +65,38 @@ class RedisDrive implements DriveInterface
             return $userObj;
         }
 
+        /**
+         * @var $tokens AuthUserObj[]
+         */
+
         if (is_object($userObj) && $userObj instanceof AuthUserObj) {
-            if ($this->redis()->hGet($this->user_token_list, $this->hashKey($userObj))) {
-                return $userObj;
+            $tokens = $this->getUidTokens($userObj);
+
+            if (empty($tokens)) {
+                throw new TokenInvalidException('无效的Token');
             }
+
+            if (!in_array($userObj->id, array_keys($tokens))) {
+                throw new TokenInvalidException('无效的Token');
+            }
+
+            if (Carbon::parse($tokens[$userObj->id]->expire_date)->getTimestamp() <= Carbon::now()->getTimestamp()) {
+                throw new TokenInvalidException('无效的Token');
+            }
+
+            return $userObj;
         }
 
         throw new TokenInvalidException('无效的Token');
+    }
+
+    public function getUidTokens(AuthUserObj $userObj): array
+    {
+        $tokens = $this->redis()->hGet($this->user_token_list, $this->hashKey($userObj));
+        if ($tokens === false) {
+            return [];
+        }
+        return unserialize($tokens);
     }
 
     /**
@@ -91,21 +117,41 @@ class RedisDrive implements DriveInterface
 
     private function hashKey(AuthUserObj $userObj)
     {
-        return $userObj->user_id . ':' . $userObj->guard . '_' . $userObj->str;
+        return $userObj->user_id . ':' . $userObj->guard;
     }
 
     public function delete($token)
     {
         $userObj = $this->verify($token);
-        $this->redis()->hDel($this->user_token_list, $this->hashKey($userObj));
+        $tokens = $this->getUidTokens($userObj);
+
+        /**
+         * @var $tokens AuthUserObj[]
+         */
+
+        foreach ($tokens as $id => $token) {
+            if ($token->id == $userObj->id) {
+                unset($tokens[$id]);
+            }
+        }
+        $this->redis()->hSet($this->user_token_list, $this->hashKey($userObj), serialize($tokens));
+
+        return $tokens;
     }
 
     public function generate(string $guard, int $uid)
     {
         $userObj = new AuthUserObj($uid, $guard, $this->getTTL(), $this->getAllowRefreshToken());
+        $tokens = $this->getUidTokens($userObj);
+        $login_token_num = count($tokens);
+        $max_token_num = $this->maxLoginNum($userObj);
+
+        if ($login_token_num >= $max_token_num) {
+            $this->delSurplusToken($userObj, $tokens, ($login_token_num - $max_token_num) + 1);
+        }
+
         $token = $this->util->encryption(serialize($userObj));
-        go(fn() => $this->delExpireTokenFunc($userObj));
-        go(fn() => $this->delSurplusToken($userObj));
+        go(fn() => $this->delExpireToken($userObj));
         $this->saveToken($userObj);
         return $token;
     }
@@ -123,73 +169,6 @@ class RedisDrive implements DriveInterface
         return $allow;
     }
 
-    private function delExpireTokenFunc(AuthUserObj $userObj)
-    {
-        $now = Carbon::now()->getTimestamp();
-        $it = null;
-
-        $del = [];
-
-        $search = $userObj->user_id . ':' . $userObj->guard . '*';
-
-        while (true) {
-            $arr = $this->redis()->hScan($this->user_token_list, $it, $search, 200);
-            if ($arr === false) {
-                break;
-            }
-            foreach ($arr as $key => $value) {
-                $obj = unserialize($value);
-                if (!$obj instanceof AuthUserObj) {
-                    $del[] = $key;
-                    continue;
-                }
-                if (Carbon::parse($obj->expire_date)->getTimestamp() < $now) {
-                    $del[] = $key;
-                }
-            }
-        }
-        call_user_func_array([$this->redis(), 'hDel'], [$this->user_token_list, ...$del]);
-    }
-
-    public function delSurplusToken(AuthUserObj $userObj)
-    {
-        $tokens = $this->getUidTokens($userObj);
-        $num = count($tokens);
-        $max_num = $this->maxLoginNum($userObj) - 1;
-
-        if ($num > $max_num) {
-            usort($tokens, function ($prv, $next) {
-                if ($prv[1] == $next) return 0;
-                return $prv[1] > $next[1] ? 1 : -1;
-            });
-            $diff_num = $num - $max_num;
-            $del_tokens = array_slice($tokens, 0, $diff_num);
-            foreach ($del_tokens as $value) {
-                $this->redis()->hDel($this->user_token_list, $value[0]);
-            }
-        }
-    }
-
-    public function getUidTokens(AuthUserObj $userObj)
-    {
-        $tokens = [];
-        $search = $userObj->user_id . ':' . $userObj->guard . '_*';
-        $it = null;
-        while (true) {
-            $arr = $this->redis()->hScan($this->user_token_list, $it, $search);
-            if ($arr === false) {
-                break;
-            }
-            foreach ($arr as $key => $value) {
-                $value = unserialize($value);
-                if ($value instanceof AuthUserObj) {
-                    $tokens[] = [$key, Carbon::parse($value->expire_date)->getTimestamp()];
-                }
-            }
-        }
-        return $tokens;
-    }
-
     private function maxLoginNum(AuthUserObj $userObj): int
     {
         $gurad = $userObj->guard;
@@ -200,10 +179,113 @@ class RedisDrive implements DriveInterface
         return $this->config('max_login_num', 7);
     }
 
+    public function delSurplusToken(AuthUserObj $userObj, array $tokens, $delete_nums = 1)
+    {
+        /**
+         * @var $tokens AuthUserObj[]
+         */
+
+        $nums = $delete_nums;
+
+        asort($tokens);
+        foreach ($tokens as $id => $token) {
+            if ($nums <= 0) {
+                break;
+            }
+            unset($tokens[$id]);
+            $nums--;
+        }
+
+        $this->redis()->hSet($this->user_token_list, $this->hashKey($userObj), serialize($tokens));
+
+    }
+
+    private function delExpireToken(AuthUserObj $userObj)
+    {
+        $now = Carbon::now()->getTimestamp();
+        $it = null;
+
+        $del = [];
+
+        $tokens = $this->getUidTokens($userObj);
+
+        /**
+         * @var $tokens AuthUserObj[]
+         */
+
+        foreach ($tokens as $id => $token) {
+            if (Carbon::parse($token->expire_date)->getTimestamp() < $now) {
+                unset($tokens[$id]);
+            }
+        }
+
+        $this->redis()->hSet($this->user_token_list, $this->hashKey($userObj), serialize($tokens));
+//        while (true) {
+//            $arr = $this->redis()->hScan($this->user_token_list, $it, $search, 200);
+//            if ($arr === false) {
+//                break;
+//            }
+//            foreach ($arr as $key => $value) {
+//                $obj = unserialize($value);
+//                if (!$obj instanceof AuthUserObj) {
+//                    $del[] = $key;
+//                    continue;
+//                }
+//                if (Carbon::parse($obj->expire_date)->getTimestamp() < $now) {
+//                    $del[] = $key;
+//                }
+//            }
+//        }
+//        call_user_func_array([$this->redis(), 'hDel'], [$this->user_token_list, ...$del]);
+    }
+
     private function saveToken(AuthUserObj $userObj)
     {
-        $this->redis()->hMSet($this->user_token_list, [
-            $this->hashKey($userObj) => serialize($userObj)
-        ]);
+        $tokens = $this->redis()->hGet($this->user_token_list, $this->hashKey($userObj));
+
+        if ($tokens === false) {
+            $tokens = [];
+            $tokens[$userObj->id] = $userObj;
+        } else {
+            $tokens = unserialize($tokens);
+            $tokens[$userObj->id] = $userObj;
+        }
+
+        $this->redis()->hSet($this->user_token_list, $this->hashKey($userObj), serialize($tokens));
+    }
+
+    /**
+     * 清理过期token 定时任务
+     */
+    #[Crontab(name: 'AuthRedisDriveDeleteExpireTokens', rule: '10 */2 * * *', onOneServer: true, singleton: true)]
+    public function deleteExpireToken()
+    {
+        /**
+         * @var $token AuthUserObj[]
+         */
+
+        $now_timestamp = Carbon::now()->getTimestamp();
+
+        $it = null;
+        while (true) {
+            $tokens = $this->redis()->hScan($this->user_token_list, $it, '*', 50);
+            if ($tokens === false) {
+                break;
+            }
+            foreach ($tokens as $hash_key => $token) {
+                $userObjList = unserialize($token);
+                if (empty($userObjList) || count($userObjList) <= 0) {
+                    continue;
+                }
+
+                foreach ($userObjList as $id => $item) {
+                    if (Carbon::parse($item->expire_date)->getTimestamp() <= $now_timestamp) {
+                        unset($userObjList[$id]);
+                    }
+                }
+
+                $this->redis()->hSet($this->user_token_list, $hash_key, serialize($userObjList));
+            }
+        }
     }
 }

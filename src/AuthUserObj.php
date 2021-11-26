@@ -5,6 +5,7 @@ namespace Niexiawei\Auth;
 
 
 use Carbon\Carbon;
+use Hyperf\Snowflake\IdGeneratorInterface;
 use Hyperf\Utils\ApplicationContext;
 use Hyperf\Utils\Str;
 
@@ -24,6 +25,12 @@ class AuthUserObj
         $this->create_date = Carbon::now()->toDateTimeString();
         $this->expire_date = Carbon::now()->addSeconds($expire_sec)->toDateTimeString();
         $this->allow_refresh_token = $allow_refresh_token;
-        $this->str = Str::random(32).':'.uniqid();
+        $this->str = Str::random(32) . ':' . uniqid();
+        $this->id = $this->setId();
+    }
+
+    private function setId()
+    {
+        return ApplicationContext::getContainer()->get(IdGeneratorInterface::class)->generate();
     }
 }
