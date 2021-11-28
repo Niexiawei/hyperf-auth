@@ -31,7 +31,7 @@ class Auth implements AuthInterface
 
     public function tokenToUser($token, $refresh = true)
     {
-        $user_info = $this->getStorage()->verify($token);
+        $user_info = $this->getDriver()->verify($token);
         $guard = $user_info->guard;
         $model = $this->config->get('auth.guards.' . $guard . '.model');
         $userModel = $this->getModel($guard);
@@ -55,11 +55,10 @@ class Auth implements AuthInterface
         throw new \Exception('用户不存在');
     }
 
-    public function getStorage(): DriveInterface
+    public function getDriver(): DriverInterface
     {
-
-        $drive = $this->config->get('auth.drive', null);
-        if (!empty($drive) || $drive instanceof DriveInterface) {
+        $drive = $this->config->get('auth.driver', null);
+        if (!empty($drive) || $drive instanceof DriverInterface) {
             return make($drive);
         }
     }
@@ -67,12 +66,12 @@ class Auth implements AuthInterface
     public function refresh()
     {
         $token = $this->getToken();
-        return $this->getStorage()->refresh($token);
+        return $this->getDriver()->refresh($token);
     }
 
     public function login(string $guard, object $user)
     {
-        return $this->getStorage()->generate($guard, $user->id);
+        return $this->getDriver()->generate($guard, $user->id);
     }
 
     public function setAllowRefreshToken(bool $allow = true): Auth
@@ -105,7 +104,7 @@ class Auth implements AuthInterface
             throw new NoTokenPassedInException();
         }
 
-        $user_info = $this->getStorage()->verify($token);
+        $user_info = $this->getDriver()->verify($token);
         $this->setUserInfo($user_info);
         return true;
     }
@@ -123,7 +122,7 @@ class Auth implements AuthInterface
         if (!$this->check()) {
             return false;
         }
-        $this->getStorage()->delete($this->getToken());
+        $this->getDriver()->delete($this->getToken());
         return true;
     }
 

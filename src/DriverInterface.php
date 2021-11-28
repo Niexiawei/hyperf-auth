@@ -4,7 +4,7 @@
 namespace Niexiawei\Auth;
 
 
-interface DriveInterface
+interface DriverInterface
 {
     public function generate(string $guard,int $uid);
     public function delete($token);
