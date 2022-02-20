@@ -25,12 +25,12 @@
     "ext-json": "*",
     "ext-redis": "*",
     "ext-swoole": ">=4.7",
-    "hyperf/command": "^2.1.0",
-    "hyperf/crontab": "^2.1.0",
-    "hyperf/di": "^2.1.0",
-    "hyperf/framework": "^2.1.0",
-    "hyperf/redis": "^2.1.0",
-    "hyperf/utils": "^2.1.0",
+    "hyperf/command": "~2.2.0",
+    "hyperf/crontab": "~2.2.0",
+    "hyperf/di": "~2.2.0",
+    "hyperf/framework": "~2.2.0",
+    "hyperf/redis": "~2.2.0",
+    "hyperf/utils": "~2.2.0",
     "nesbot/carbon": "^2.22"
   },
   "require-dev": {

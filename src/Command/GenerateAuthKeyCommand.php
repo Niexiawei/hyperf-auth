@@ -27,9 +27,9 @@ class GenerateAuthKeyCommand extends AuthCommand
 
     public function handle()
     {
-        $f = fopen(BASE_PATH.'/auth_key','w+');
-        fwrite($f,\Hyperf\Utils\Str::random(32));
+        $f = fopen(BASE_PATH . '/auth_key', 'w+');
+        fwrite($f, \Hyperf\Utils\Str::random(32));
         fclose($f);
-        $this->line('成功');
+        $this->output->success("auth_key已生成，请重启服务!");
     }
 }
