@@ -14,7 +14,7 @@ interface AuthInterface
 
     public function check();
 
-    public function user($cloumn = null,$refresh = true): object;
+    public function user($column = null,$refresh = true): object;
 
     public function getToken();
 

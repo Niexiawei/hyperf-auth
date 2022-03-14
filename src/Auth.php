@@ -16,10 +16,10 @@ use Niexiawei\Auth\Exception\NoTokenPassedInException;
 
 class Auth implements AuthInterface
 {
-    private $container;
-    private $request;
-    private $config;
-    private $cache;
+    private Container $container;
+    private RequestInterface $request;
+    private ConfigInterface $config;
+    private CacheInterface $cache;
 
     public function __construct(Container $container)
     {
@@ -126,7 +126,7 @@ class Auth implements AuthInterface
         return true;
     }
 
-    public function user($cloumn = null, $refresh = true): object
+    public function user($column = null, $refresh = true): object
     {
         $user = Context::get(UserContextInterface::class, []);
         if ($user) {
@@ -147,7 +147,7 @@ class Auth implements AuthInterface
                     }
                 }
 
-                $user = $userModel->authFind($this->getUserInfo()->user_id, $cloumn);
+                $user = $userModel->authFind($this->getUserInfo()->user_id, $column);
                 if ($user instanceof $model) {
                     Context::set(UserContextInterface::class, $user);
                     $this->cache->set($guard, $this->getUserInfo()->user_id, $user);
