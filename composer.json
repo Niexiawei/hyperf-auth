@@ -24,20 +24,21 @@
     "php": ">=8.0",
     "ext-json": "*",
     "ext-redis": "*",
-    "ext-swoole": ">=4.7",
+    "ext-swoole": ">=4.8",
     "hyperf/command": "~2.2.0",
     "hyperf/crontab": "~2.2.0",
     "hyperf/di": "~2.2.0",
     "hyperf/framework": "~2.2.0",
     "hyperf/redis": "~2.2.0",
     "hyperf/utils": "~2.2.0",
-    "nesbot/carbon": "^2.22"
+    "nesbot/carbon": "^2.22",
+    "hyperf/config": "~2.2.0"
   },
   "require-dev": {
     "friendsofphp/php-cs-fixer": "^2.14",
     "hyperf/testing": "^2.1.0",
     "phpunit/phpunit": "^9.4.0",
-    "swoft/swoole-ide-helper": "dev-master"
+    "swoole/ide-helper": "@dev"
   },
   "config": {
     "sort-packages": true

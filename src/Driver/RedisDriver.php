@@ -8,7 +8,8 @@ use Hyperf\Contract\ConfigInterface;
 use Hyperf\Crontab\Annotation\Crontab;
 use Hyperf\Di\Annotation\Inject;
 use Hyperf\Redis\RedisFactory;
-use Hyperf\Utils\Context;
+use Hyperf\Context\Context;
+use Hyperf\Redis\RedisProxy;
 use Niexiawei\Auth\AuthUserObj;
 use Niexiawei\Auth\Constants\AllowRefreshOrNotInterface;
 use Niexiawei\Auth\Constants\setTokenExpireInterface;
@@ -21,16 +22,19 @@ use Niexiawei\Auth\Util;
 class RedisDriver implements DriverInterface
 {
     public $user_token_list = 'user_token_list';
+
     /**
      * @Inject()
      * @var RedisFactory
      */
     protected $RedisFactory;
+
     /**
      * @Inject()
      * @var ConfigInterface
      */
     protected $config;
+
     /**
      * @Inject()
      * @var Util
@@ -100,7 +104,7 @@ class RedisDriver implements DriverInterface
     }
 
     /**
-     * @return \Hyperf\Redis\RedisProxy|\Redis
+     * @return RedisProxy
      * 获取Redis
      */
 
@@ -251,7 +255,7 @@ class RedisDriver implements DriverInterface
      * 清理过期token 定时任务
      */
     #[Crontab(name: 'AuthRedisDriveDeleteExpireTokens', rule: '10 */2 * * *', onOneServer: true, singleton: true)]
-    public function deleteExpireToken()
+    public function deleteExpireTokens()
     {
         /**
          * @var $token AuthUserObj[]

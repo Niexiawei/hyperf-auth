@@ -3,36 +3,39 @@
 namespace Niexiawei\Auth\Cache;
 
 use Hyperf\Di\Annotation\Inject;
+use Hyperf\Redis\Redis;
+use Niexiawei\Auth\CacheInterface;
 
-class RedisCache
+class RedisCache implements CacheInterface
 {
     /**
      * @Inject()
-     * @var \Redis
+     * @var Redis
      */
 
     protected $redis;
 
     /**
-     * @param string $gurad
+     * @param string $guard
      * @param int $user_id
+     * @param object $user
      */
 
-    public function set($gurad, $user_id, object $user)
+    public function set(string $guard, $user_id, object $user)
     {
-        $key = 'auth_cache:' . $gurad.'_'.$user_id;
+        $key = 'auth_cache:' . $guard . '_' . $user_id;
         $this->redis->setex($key, 3600, serialize($user));
     }
 
     /**
-     * @param string $gurad
+     * @param string $guard
      * @param int $user_id
-     * @param false $refresh
+     * @return mixed|null
      */
 
-    public function get($gurad, $user_id)
+    public function get(string $guard, $user_id)
     {
-        $key = 'auth_cache:' . $gurad.'_'.$user_id;
+        $key = 'auth_cache:' . $guard . '_' . $user_id;
 
         $user_string = $this->redis->get($key);
         if ($user_string) {

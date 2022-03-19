@@ -6,13 +6,13 @@ namespace Niexiawei\Auth;
 use Hyperf\Contract\ConfigInterface;
 use Hyperf\Di\Container;
 use Hyperf\HttpServer\Contract\RequestInterface;
-use Hyperf\Utils\Context;
 use Niexiawei\Auth\Exception\AuthModelNothingnessException;
 use Niexiawei\Auth\Exception\NotInheritedInterfaceException;
 use Niexiawei\Auth\Constants\AllowRefreshOrNotInterface;
 use Niexiawei\Auth\Constants\setTokenExpireInterface;
 use Niexiawei\Auth\Constants\UserContextInterface;
 use Niexiawei\Auth\Exception\NoTokenPassedInException;
+use Hyperf\Context\Context;
 
 class Auth implements AuthInterface
 {
@@ -61,6 +61,7 @@ class Auth implements AuthInterface
         if (!empty($drive) || $drive instanceof DriverInterface) {
             return make($drive);
         }
+        throw new \Exception("AuthDriver不存在");
     }
 
     public function refresh()
@@ -85,7 +86,7 @@ class Auth implements AuthInterface
         if ($second <= 10) {
             throw new \Exception('token时间必须大于10秒');
         }
-        $res = Context::set(setTokenExpireInterface::class, $second);
+        Context::set(setTokenExpireInterface::class, $second);
         return $this;
     }
 

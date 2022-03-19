@@ -5,19 +5,17 @@ namespace Niexiawei\Auth;
 
 
 use Hyperf\Config\Annotation\Value;
-use Hyperf\Contract\ConfigInterface;
-use Hyperf\Utils\ApplicationContext;
 use Hyperf\Utils\Str;
 
 class Util
 {
-    public $method = 'aes-256-cbc';
+    public string $method = 'aes-256-cbc';
 
     /**
      * @var array
      * @Value("auth")
      */
-    protected $auth_config;
+    protected array $auth_config;
 
     private function key()
     {
