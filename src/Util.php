@@ -5,6 +5,7 @@ namespace Niexiawei\Auth;
 
 
 use Hyperf\Config\Annotation\Value;
+use Hyperf\Context\Context;
 use Hyperf\Utils\Str;
 
 class Util
@@ -31,13 +32,25 @@ class Util
         return Str::substr($this->key() . '0000000000000000', 0, 16);
     }
 
-    public function encryption($data)
+    public static function encryption($data)
     {
-        return base64_encode(openssl_encrypt($data, $this->method, $this->key(), 0, $this->iv()));
+        return base64_encode(openssl_encrypt($data, self::selfClass()->method, self::selfClass()->key(), 0, self::selfClass()->iv()));
     }
 
-    public function decrypt($data)
+    public static function decrypt($data)
     {
-        return openssl_decrypt(base64_decode($data), $this->method, $this->key(), 0, $this->iv());
+        return openssl_decrypt(base64_decode($data), self::selfClass()->method, self::selfClass()->key(), 0, self::selfClass()->iv());
+    }
+
+    public static function selfClass(): static
+    {
+        $self = Context::get(static::class . '_selfClass', null);
+        if (!$self) {
+            $self = new self();
+            Context::set(static::class . '_selfClass', $self);
+            return $self;
+        }
+
+        return $self;
     }
 }
