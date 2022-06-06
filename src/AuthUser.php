@@ -16,13 +16,13 @@ trait AuthUser
         return $this->id;
     }
 
-    public function authFind($id, $cloumn = null)
+    public function authFind($id, $column = null)
     {
 
-        if (empty($cloumn) || is_null($cloumn)) {
-            $cloumn = $this->authFindColumn();
+        if (empty($cloumn) || is_null($column)) {
+            $column = $this->authFindColumn();
         }
 
-        return self::find($id, $cloumn);
+        return self::find($id, $column);
     }
 }

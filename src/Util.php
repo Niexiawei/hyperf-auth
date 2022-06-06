@@ -12,10 +12,7 @@ class Util
 {
     public string $method = 'aes-256-cbc';
 
-    /**
-     * @var array
-     * @Value("auth")
-     */
+    #[Value("auth")]
     protected array $auth_config;
 
     private function key()

@@ -11,12 +11,13 @@ use Hyperf\Utils\Str;
 
 class AuthUserObj
 {
-    public $user_id;
-    public $guard;
-    public $create_date;
-    public $expire_date;
-    public $allow_refresh_token;
-    public $str;
+    public int $user_id;
+    public string $guard;
+    public string $create_date;
+    public string $expire_date;
+    public bool $allow_refresh_token;
+    public string $str;
+    public int $id;
 
     public function __construct(int $user_id, string $guard, int $expire_sec, bool $allow_refresh_token)
     {
@@ -29,7 +30,7 @@ class AuthUserObj
         $this->id = $this->setId();
     }
 
-    private function setId()
+    private function setId(): int
     {
         return ApplicationContext::getContainer()->get(IdGeneratorInterface::class)->generate();
     }

@@ -24,24 +24,12 @@ class RedisDriver implements DriverInterface
 {
     public string $user_token_list = 'user_token_list';
 
-    /**
-     * @Inject()
-     * @var RedisFactory
-     */
     #[Inject]
     protected RedisFactory $RedisFactory;
 
-    /**
-     * @Inject()
-     * @var ConfigInterface
-     */
     #[Inject]
     protected ConfigInterface $config;
 
-    /**
-     * @var StdoutLoggerInterface
-     * @Inject
-     */
     #[Inject]
     protected StdoutLoggerInterface $stdoutLogger;
 

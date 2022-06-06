@@ -13,11 +13,6 @@ use Niexiawei\Auth\Exception\TokenInvalidException;
 use Niexiawei\Auth\Exception\TokenUnableToRefreshException;
 use Psr\Container\ContainerInterface;
 
-/**
- * Class AopAuth
- * @package App\Aspect
- * @Aspect()
- */
 #[Aspect()]
 class AuthAspect extends AbstractAspect
 {
@@ -25,9 +20,9 @@ class AuthAspect extends AbstractAspect
         Auth::class
     ];
 
-    public $container;
-    public $response;
-    public $auth;
+    public ContainerInterface $container;
+    public ResponseInterface $response;
+    public AuthInterface $auth;
 
     public function __construct(ContainerInterface $container)
     {
@@ -41,7 +36,7 @@ class AuthAspect extends AbstractAspect
         try {
             $this->auth->check();
             return $proceedingJoinPoint->process();
-        } catch (TokenInvalidException | TokenUnableToRefreshException $exception) {
+        } catch (TokenInvalidException|TokenUnableToRefreshException $exception) {
             return $this->response->json(['code' => 401, 'msg' => $exception->getMessage()]);
         }
     }

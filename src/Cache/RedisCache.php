@@ -8,12 +8,9 @@ use Niexiawei\Auth\CacheInterface;
 
 class RedisCache implements CacheInterface
 {
-    /**
-     * @Inject()
-     * @var Redis
-     */
 
-    protected $redis;
+    #[Inject]
+    protected Redis $redis;
 
     /**
      * @param string $guard
@@ -21,7 +18,7 @@ class RedisCache implements CacheInterface
      * @param object $user
      */
 
-    public function set(string $guard, $user_id, object $user)
+    public function set(string $guard, $user_id, object $user): void
     {
         $key = 'auth_cache:' . $guard . '_' . $user_id;
         $this->redis->setex($key, 3600, serialize($user));
@@ -33,7 +30,7 @@ class RedisCache implements CacheInterface
      * @return mixed|null
      */
 
-    public function get(string $guard, $user_id)
+    public function get(string $guard, $user_id): mixed
     {
         $key = 'auth_cache:' . $guard . '_' . $user_id;
 
