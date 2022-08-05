@@ -16,14 +16,12 @@ use Hyperf\Context\Context;
 
 class Auth implements AuthInterface
 {
-    private Container $container;
     private RequestInterface $request;
     private ConfigInterface $config;
     private CacheInterface $cache;
 
     public function __construct(Container $container)
     {
-        $this->container = $container;
         $this->request = $container->get(RequestInterface::class);
         $this->config = $container->get(ConfigInterface::class);
         $this->cache = $container->get(CacheInterface::class);
@@ -90,7 +88,7 @@ class Auth implements AuthInterface
         return $this;
     }
 
-    public function guard()
+    public function guard(): int|string
     {
         if ($this->check()) {
             return $this->getUserInfo()->guard;

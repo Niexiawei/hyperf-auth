@@ -245,7 +245,7 @@ class RedisDriver implements DriverInterface
     public function deleteExpireTokens()
     {
         /**
-         * @var $token AuthUserObj[]
+         * @var $userObjList AuthUserObj[]
          */
 
         try {
@@ -263,6 +263,7 @@ class RedisDriver implements DriverInterface
                     }
 
                     foreach ($userObjList as $id => $item) {
+                        /** @var $item AuthUserObj */
                         if (Carbon::parse($item->expire_date)->getTimestamp() <= $now_timestamp) {
                             unset($userObjList[$id]);
                         }

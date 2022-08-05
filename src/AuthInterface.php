@@ -14,7 +14,7 @@ interface AuthInterface
 
     public function check();
 
-    public function user($column = null,$refresh = true): object;
+    public function user($column = null, $refresh = true): object;
 
     public function getToken();
 
@@ -24,9 +24,9 @@ interface AuthInterface
 
     public function setAllowRefreshToken(bool $allow = true): Auth;
 
-    public function guard();
+    public function guard(): int|string;
 
     public function refresh();
 
-    public function tokenToUser($token,$refresh = true);
+    public function tokenToUser($token, $refresh = true);
 }

@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Niexiawei\Auth\Middleware;
 
 use Hyperf\HttpServer\Contract\RequestInterface;
-use Hyperf\Utils\ApplicationContext;
-use Hyperf\Utils\Context;
 use Niexiawei\Auth\AuthInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -17,14 +15,12 @@ use Hyperf\HttpServer\Contract\ResponseInterface as HttpResponse;
 
 class UserAuthenticationMiddleware implements MiddlewareInterface
 {
-    /**
-     * @var ContainerInterface
-     */
-    protected $container;
-    protected $request;
-    protected $response;
-    protected $AuthInterface;
-    protected $guard;
+
+    protected ContainerInterface $container;
+    protected RequestInterface $request;
+    protected HttpResponse $response;
+    protected AuthInterface $AuthInterface;
+    protected int|string $guard;
 
     public function __construct(ContainerInterface $container, RequestInterface $request, HttpResponse $response)
     {
