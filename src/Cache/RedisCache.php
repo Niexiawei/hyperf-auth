@@ -16,6 +16,7 @@ class RedisCache implements CacheInterface
      * @param string $guard
      * @param int $user_id
      * @param object $user
+     * @throws \RedisException
      */
 
     public function set(string $guard, $user_id, object $user): void
@@ -28,6 +29,7 @@ class RedisCache implements CacheInterface
      * @param string $guard
      * @param int $user_id
      * @return mixed|null
+     * @throws \RedisException
      */
 
     public function get(string $guard, $user_id): mixed

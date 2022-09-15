@@ -3,14 +3,12 @@
 namespace Niexiawei\Auth\Command;
 
 use Hyperf\Command\Command as AuthCommand;
+use Hyperf\Utils\Str as HyperfUtilsStr;
 use Psr\Container\ContainerInterface;
 
 class GenerateAuthKeyCommand extends AuthCommand
 {
-    /**
-     * @var ContainerInterface
-     */
-    protected $container;
+    protected ContainerInterface $container;
 
     public function __construct(ContainerInterface $container)
     {
@@ -28,7 +26,7 @@ class GenerateAuthKeyCommand extends AuthCommand
     public function handle()
     {
         $f = fopen(BASE_PATH . '/auth_key', 'w+');
-        fwrite($f, \Hyperf\Utils\Str::random(32));
+        fwrite($f, HyperfUtilsStr::random(32));
         fclose($f);
         $this->output->success("auth_key已生成，请重启服务!");
     }

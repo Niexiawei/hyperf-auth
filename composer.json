@@ -33,7 +33,8 @@
     "hyperf/redis": "~2.2.0",
     "hyperf/snowflake": "v2.2.33.1",
     "hyperf/utils": "~2.2.0",
-    "nesbot/carbon": "^2.22"
+    "nesbot/carbon": "^2.22",
+    "ext-openssl": "*"
   },
   "require-dev": {
     "friendsofphp/php-cs-fixer": "^2.14",
