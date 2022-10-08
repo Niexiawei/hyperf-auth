@@ -4,7 +4,8 @@
  *  guards 配置格式
  * [
  *    'auth'=>[
- *         'model'=>'app/Models/User::class'
+ *         'model'=>'app/Models/User::class',
+ *         'cache' => true
  *     ]
  * ]
  *
@@ -19,5 +20,5 @@ return [
     'max_login_num' => 7, // 最大登录客户端
     'allow_timeout_refresh' => 60,
     'redis_pool' => 'auth',
-    'driver' => \Niexiawei\Auth\Driver\RedisDriver::class
+    'driver' => \Niexiawei\Auth\Driver\RedisDriver::class,
 ];

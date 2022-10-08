@@ -33,11 +33,7 @@ class AuthAspect extends AbstractAspect
 
     public function process(ProceedingJoinPoint $proceedingJoinPoint)
     {
-        try {
-            $this->auth->check();
-            return $proceedingJoinPoint->process();
-        } catch (TokenInvalidException|TokenUnableToRefreshException $exception) {
-            return $this->response->json(['code' => 401, 'msg' => $exception->getMessage()]);
-        }
+        $this->auth->check();
+        return $proceedingJoinPoint->process();
     }
 }

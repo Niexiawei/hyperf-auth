@@ -5,6 +5,7 @@ namespace Niexiawei\Auth\Cache;
 use Hyperf\Di\Annotation\Inject;
 use Hyperf\Redis\Redis;
 use Niexiawei\Auth\CacheInterface;
+use RedisException;
 
 class RedisCache implements CacheInterface
 {
@@ -16,7 +17,7 @@ class RedisCache implements CacheInterface
      * @param string $guard
      * @param int $user_id
      * @param object $user
-     * @throws \RedisException
+     * @throws RedisException
      */
 
     public function set(string $guard, $user_id, object $user): void
@@ -28,11 +29,11 @@ class RedisCache implements CacheInterface
     /**
      * @param string $guard
      * @param int $user_id
-     * @return mixed|null
-     * @throws \RedisException
+     * @return object|null
+     * @throws RedisException
      */
 
-    public function get(string $guard, $user_id): mixed
+    public function get(string $guard, $user_id): ?object
     {
         $key = 'auth_cache:' . $guard . '_' . $user_id;
 

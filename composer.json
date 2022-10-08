@@ -20,21 +20,22 @@
       "HyperfTest\\": "tests"
     }
   },
+  "suggest": {},
   "require": {
     "php": ">=8.0",
     "ext-json": "*",
     "ext-redis": "*",
     "ext-swoole": ">=4.8",
-    "hyperf/command": "~2.2.0",
-    "hyperf/config": "~2.2.0",
-    "hyperf/crontab": "~2.2.0",
     "hyperf/di": "~2.2.0",
     "hyperf/framework": "~2.2.0",
+    "nesbot/carbon": "^2.22",
+    "ext-openssl": "*",
     "hyperf/redis": "~2.2.0",
     "hyperf/snowflake": "v2.2.33.1",
     "hyperf/utils": "~2.2.0",
-    "nesbot/carbon": "^2.22",
-    "ext-openssl": "*"
+    "hyperf/command": "~2.2.0",
+    "hyperf/config": "~2.2.0",
+    "hyperf/crontab": "~2.2.0"
   },
   "require-dev": {
     "friendsofphp/php-cs-fixer": "^2.14",
