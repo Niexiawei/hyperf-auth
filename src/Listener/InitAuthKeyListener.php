@@ -3,9 +3,7 @@
 
 namespace Niexiawei\Auth\Listener;
 
-
 use Hyperf\Contract\ConfigInterface;
-use Hyperf\Contract\StdoutLoggerInterface;
 use Hyperf\Event\Contract\ListenerInterface;
 use Hyperf\Framework\Event\BeforeMainServerStart;
 use Hyperf\Utils\ApplicationContext;

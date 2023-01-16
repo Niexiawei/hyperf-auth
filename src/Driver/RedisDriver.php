@@ -16,6 +16,7 @@ use Niexiawei\Auth\Constants\AllowRefreshOrNotInterface;
 use Niexiawei\Auth\Constants\setTokenExpireInterface;
 use Niexiawei\Auth\DriverInterface;
 use Niexiawei\Auth\Exception\NoTokenPassedInException;
+use Niexiawei\Auth\Exception\TokenGenerateErrorException;
 use Niexiawei\Auth\Exception\TokenInvalidException;
 use Niexiawei\Auth\Exception\TokenUnableToRefreshException;
 use Niexiawei\Auth\Util;
@@ -33,7 +34,12 @@ class RedisDriver implements DriverInterface
     #[Inject]
     protected StdoutLoggerInterface $stdoutLogger;
 
-    public function refresh($token)
+    /**
+     * @throws TokenInvalidException
+     * @throws TokenUnableToRefreshException
+     * @throws NoTokenPassedInException
+     */
+    public function refresh($token): string
     {
         $userObj = $this->verify($token, true);
         if ($userObj->allow_refresh_token) {
@@ -42,13 +48,16 @@ class RedisDriver implements DriverInterface
             $diff_second = $now - $expire;
             if ($expire > $now || $diff_second <= $this->config('allow_timeout_refresh', 30)) {
                 $this->delete($token);
-                $token = $this->generate($userObj->guard, $userObj->user_id);
-                return $token;
+                return $this->generate($userObj->guard, $userObj->user_id);
             }
         }
         throw new TokenUnableToRefreshException('Token无法刷新!');
     }
 
+    /**
+     * @throws TokenInvalidException
+     * @throws NoTokenPassedInException
+     */
     public function verify($token, $local_verify = false): AuthUserObj
     {
         if (empty($token)) {
@@ -99,7 +108,7 @@ class RedisDriver implements DriverInterface
      * 获取Redis
      */
 
-    protected function redis()
+    protected function redis(): RedisProxy
     {
         $pool = $this->config('redis_pool', 'default');
         return $this->RedisFactory->get($pool);
@@ -110,12 +119,12 @@ class RedisDriver implements DriverInterface
         return $this->config->get('auth.' . $key, $default);
     }
 
-    private function hashKey(AuthUserObj $userObj)
+    private function hashKey(AuthUserObj $userObj): string
     {
         return $userObj->user_id . ':' . $userObj->guard;
     }
 
-    public function delete($token)
+    public function delete($token): array
     {
         $userObj = $this->verify($token, true);
         $tokens = $this->getUidTokens($userObj);
@@ -129,12 +138,15 @@ class RedisDriver implements DriverInterface
                 unset($tokens[$id]);
             }
         }
-        $this->redis()->hSet($this->user_token_list, $this->hashKey($userObj), serialize($tokens));
+        try {
+            $this->redis()->hSet($this->user_token_list, $this->hashKey($userObj), serialize($tokens));
+        } catch (\RedisException $e) {
+        }
 
         return $tokens;
     }
 
-    public function generate(string $guard, int $uid)
+    public function generate(string $guard, int $uid): string
     {
         $userObj = new AuthUserObj($uid, $guard, $this->getTTL(), $this->getAllowRefreshToken());
         $tokens = $this->getUidTokens($userObj);
@@ -151,11 +163,10 @@ class RedisDriver implements DriverInterface
         return $token;
     }
 
-    private function getTTL()
+    private function getTTL(): int
     {
         $config = $this->config('expire', 3600 * 24);
-        $second = Context::get(setTokenExpireInterface::class, $config);
-        return $second;
+        return Context::get(setTokenExpireInterface::class, $config);
     }
 
     private function getAllowRefreshToken(): bool
@@ -173,7 +184,7 @@ class RedisDriver implements DriverInterface
         return $this->config('max_login_num', 7);
     }
 
-    public function delSurplusToken(AuthUserObj $userObj, array $tokens, $delete_nums = 1)
+    public function delSurplusToken(AuthUserObj $userObj, array $tokens, $delete_nums = 1): void
     {
         /**
          * @var $tokens AuthUserObj[]
@@ -190,23 +201,35 @@ class RedisDriver implements DriverInterface
             $nums--;
         }
 
-        $this->redis()->hSet($this->user_token_list, $this->hashKey($userObj), serialize($tokens));
-
+        try {
+            $this->redis()->hSet($this->user_token_list, $this->hashKey($userObj), serialize($tokens));
+        } catch (\RedisException $e) {
+        }
     }
 
-    private function saveToken(AuthUserObj $userObj)
+    /**
+     * @throws TokenGenerateErrorException
+     */
+    private function saveToken(AuthUserObj $userObj): void
     {
-        $tokens = $this->redis()->hGet($this->user_token_list, $this->hashKey($userObj));
+        try {
+            $tokens = $this->redis()->hGet($this->user_token_list, $this->hashKey($userObj));
+        } catch (\RedisException $e) {
+            throw new TokenGenerateErrorException();
+        }
 
         if ($tokens === false) {
             $tokens = [];
-            $tokens[$userObj->id] = $userObj;
         } else {
             $tokens = unserialize($tokens);
-            $tokens[$userObj->id] = $userObj;
         }
 
-        $this->redis()->hSet($this->user_token_list, $this->hashKey($userObj), serialize($tokens));
+        $tokens[$userObj->id] = $userObj;
+        try {
+            $this->redis()->hSet($this->user_token_list, $this->hashKey($userObj), serialize($tokens));
+        } catch (\RedisException $e) {
+            throw new TokenGenerateErrorException();
+        }
     }
 
     private function delExpireToken(AuthUserObj $userObj, array $ignore_token_id_list = [])
@@ -235,7 +258,10 @@ class RedisDriver implements DriverInterface
             }
         }
 
-        $this->redis()->hSet($this->user_token_list, $this->hashKey($userObj), serialize($tokens));
+        try {
+            $this->redis()->hSet($this->user_token_list, $this->hashKey($userObj), serialize($tokens));
+        } catch (\RedisException $e) {
+        }
     }
 
     /**

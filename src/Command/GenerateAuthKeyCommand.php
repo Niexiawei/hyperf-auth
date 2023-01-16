@@ -20,7 +20,7 @@ class GenerateAuthKeyCommand extends AuthCommand
     public function configure()
     {
         parent::configure();
-        $this->setDescription('生成auth的加密秘钥');
+        $this->setDescription('生成/刷新用于Auth组件的加密秘钥');
     }
 
     public function handle()
