@@ -6,8 +6,8 @@ namespace Niexiawei\Auth;
 
 use Carbon\Carbon;
 use Hyperf\Snowflake\IdGeneratorInterface;
-use Hyperf\Utils\ApplicationContext;
-use Hyperf\Utils\Str;
+use Hyperf\Context\ApplicationContext;
+use Hyperf\Stringable\Str;
 
 class AuthUserObj
 {

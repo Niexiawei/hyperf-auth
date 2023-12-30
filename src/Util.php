@@ -6,7 +6,7 @@ namespace Niexiawei\Auth;
 
 use Hyperf\Config\Annotation\Value;
 use Hyperf\Context\Context;
-use Hyperf\Utils\Str;
+use Hyperf\Stringable\Str;
 
 class Util
 {
