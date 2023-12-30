@@ -16,7 +16,7 @@ use Psr\Container\ContainerInterface;
 #[Aspect()]
 class AuthAspect extends AbstractAspect
 {
-    public $annotations = [
+    public array $annotations = [
         Auth::class
     ];
 

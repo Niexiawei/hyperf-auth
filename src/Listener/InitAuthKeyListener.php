@@ -3,11 +3,11 @@
 
 namespace Niexiawei\Auth\Listener;
 
+use Hyperf\Context\ApplicationContext;
 use Hyperf\Contract\ConfigInterface;
 use Hyperf\Event\Contract\ListenerInterface;
 use Hyperf\Framework\Event\BeforeMainServerStart;
-use Hyperf\Utils\ApplicationContext;
-use Hyperf\Utils\Str as HyperfUtilsStr;
+use Hyperf\Stringable\Str;
 
 class InitAuthKeyListener implements ListenerInterface
 {
@@ -18,7 +18,7 @@ class InitAuthKeyListener implements ListenerInterface
         ];
     }
 
-    public function process(object $event)
+    public function process(object $event): void
     {
         if ($event instanceof BeforeMainServerStart) {
             $app = ApplicationContext::getContainer();
@@ -35,7 +35,7 @@ class InitAuthKeyListener implements ListenerInterface
 
     private function generateAuthKeyFile(ConfigInterface $config)
     {
-        $key = HyperfUtilsStr::random(32);
+        $key = Str::random(32);
         $f = fopen(BASE_PATH . '/auth_key', 'w+');
         fwrite($f, $key);
         fclose($f);
